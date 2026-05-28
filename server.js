@@ -151,7 +151,7 @@ Retourne UNIQUEMENT ce JSON sans markdown:
 - architecte: firme d'architecture (très important!)
 - region: ville ou région
 - valeur_estimee: valeur en $ si mentionnée (chiffre seulement)
-- type_produit: Panneaux CYR-400 / Panneaux CYR-300 / Pliages aluminium / Bacs de plantation / Pare-soleil / Autre
+- type_produit: CYR-400 peint / CYR-300 peint / CYR-400 anodisé / Bacs de plantation / Pare-soleil / Shadowbox / Pliages aluminium / Pannes d'acier / Autre
 - source: LinkedIn / Agora / SEAO / Autre
 - phase: Concept / Design / Appel d'offres / Construction
 - notes: résumé utile pour Cyrell (étages, usage, matériaux façade)
