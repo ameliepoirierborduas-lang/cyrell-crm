@@ -410,6 +410,16 @@ canvas{max-height:200px}
       </div>
       <div class="form-group full"><label>Lien (Agora, LinkedIn...)</label><input id="vp-lien" placeholder="https://..."/></div>
       <div class="form-group full"><label>Notes</label><textarea id="vp-notes" placeholder="Contexte, contacts, prochaines étapes..."></textarea></div>
+      <div class="form-group full"><label>Photo / Capture d'écran (optionnel)</label>
+        <div id="vp-photo-zone" style="border:2px dashed var(--border2);border-radius:var(--rsm);padding:1rem;text-align:center;cursor:pointer;background:var(--bg3);font-size:12px;color:var(--text3)" onclick="document.getElementById('vp-photo-in').click()">
+          📷 Cliquer pour ajouter une photo ou capture d'écran
+          <input type="file" id="vp-photo-in" accept="image/*" style="display:none" onchange="previewVeillePhoto(this)"/>
+        </div>
+        <div id="vp-photo-preview" style="display:none;margin-top:8px;position:relative">
+          <img id="vp-photo-img" style="max-width:100%;max-height:200px;border-radius:var(--rsm);border:1px solid var(--border);object-fit:cover"/>
+          <button onclick="clearVeillePhoto()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:1">✕</button>
+        </div>
+      </div>
     </div>
     <div style="display:flex;gap:7px">
       <button class="btn primary" onclick="saveVeille()">✓ Enregistrer</button>
@@ -625,7 +635,8 @@ function saveNote(id,auteur,type,texte){
 function saveVeille(){
   const nom=document.getElementById('vp-nom').value.trim();
   if(!nom){showMsg('Nom du projet requis.','s-error','veille-status');return;}
-  const entry={id:Date.now(),nom_projet:nom,promoteur:document.getElementById('vp-promoteur').value.trim(),architecte:document.getElementById('vp-architecte').value.trim(),region:document.getElementById('vp-region').value.trim(),valeur_estimee:Number(document.getElementById('vp-valeur').value)||null,type_produit:document.getElementById('vp-type').value,source:document.getElementById('vp-source').value,phase:document.getElementById('vp-phase').value,statut:document.getElementById('vp-statut').value,assigne_a:document.getElementById('vp-assigne').value,lien:document.getElementById('vp-lien').value.trim(),notes:document.getElementById('vp-notes').value.trim(),date_repere:today()};
+  const photoImg=document.getElementById('vp-photo-img');const photo=photoImg&&photoImg.src&&!photoImg.src.startsWith('data:,')?photoImg.src:null;
+  const entry={id:Date.now(),nom_projet:nom,promoteur:document.getElementById('vp-promoteur').value.trim(),architecte:document.getElementById('vp-architecte').value.trim(),region:document.getElementById('vp-region').value.trim(),valeur_estimee:Number(document.getElementById('vp-valeur').value)||null,type_produit:document.getElementById('vp-type').value,source:document.getElementById('vp-source').value,phase:document.getElementById('vp-phase').value,statut:document.getElementById('vp-statut').value,assigne_a:document.getElementById('vp-assigne').value,lien:document.getElementById('vp-lien').value.trim(),notes:document.getElementById('vp-notes').value.trim(),date_repere:today(),photo};
   veille.unshift(entry);
   localStorage.setItem('cyrell_veille',JSON.stringify(veille));
   showMsg('✅ Projet ajouté à la veille!','s-success','veille-status');
@@ -647,6 +658,7 @@ function convertirEnSoumission(id){
 function toggleVeilleForm(){
   const f=document.getElementById('veille-form');
   f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display==='none'){clearVeillePhoto();document.getElementById('vp-photo-in').value='';}
 }
 
 function updateFilters(){
@@ -1001,15 +1013,15 @@ function closeClientModal(e){
 }
 
 function renderVendeurs(){
-  const vs=Object.keys(VC).filter(v=>data.some(d=>d.vendeur===v));
-  if(!vs.length)return;
-  const stats=vs.map(v=>{
-    const all=data.filter(d=>d.vendeur===v);
+  const vs=Object.keys(VC).filter(vn=>data.some(d=>d.vendeur===vn));
+  if(!vs.length){document.getElementById('lb-val').innerHTML='<div class="empty">Aucune donnée</div>';document.getElementById('lb-count').innerHTML='';document.getElementById('vend-tbody').innerHTML='';return;}
+  const stats=vs.map(vn=>{
+    const all=data.filter(d=>d.vendeur===vn);
     const actifs=all.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
     const gag=all.filter(d=>d.statut==='Gagné');
     const ret=actifs.filter(d=>du(d.date_suivi)<=0);
     const fer=all.filter(d=>['Gagné','Perdu'].includes(d.statut));
-    return{v,total:all.length,actifs:actifs.length,valActif:actifs.reduce((a,s)=>a+(s.valeur||0),0),gag:gag.length,valGag:gag.reduce((a,s)=>a+(s.valeur||0),0),ret:ret.length,taux:fer.length?Math.round(gag.length/fer.length*100):null};
+    return{v:vn,total:all.length,actifs:actifs.length,valActif:actifs.reduce((a,s)=>a+(s.valeur||0),0),gag:gag.length,valGag:gag.reduce((a,s)=>a+(s.valeur||0),0),ret:ret.length,taux:fer.length?Math.round(gag.length/fer.length*100):null};
   });
   const byVal=[...stats].sort((a,b)=>b.valActif-a.valActif);
   const byC=[...stats].sort((a,b)=>b.total-a.total);
@@ -1144,6 +1156,7 @@ function renderVeille(){
             ${v.type_produit?`<span>🔧 ${v.type_produit}</span>`:''}
           </div>
           ${v.notes?`<div style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.5">${v.notes.substring(0,150)}${v.notes.length>150?'...':''}</div>`:''}
+          ${v.photo?`<div style="margin-top:8px"><img src="${v.photo}" style="max-width:100%;max-height:160px;border-radius:var(--rsm);border:1px solid var(--border);object-fit:cover"/></div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:10px;color:var(--text3)">Repéré le ${fd(v.date_repere)}</div>
@@ -1157,6 +1170,22 @@ function renderVeille(){
     </div>`).join('');
 }
 
+function previewVeillePhoto(input){
+  if(!input.files||!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.getElementById('vp-photo-img').src=e.target.result;
+    document.getElementById('vp-photo-preview').style.display='block';
+    document.getElementById('vp-photo-zone').style.display='none';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function clearVeillePhoto(){
+  document.getElementById('vp-photo-img').src='';
+  document.getElementById('vp-photo-preview').style.display='none';
+  document.getElementById('vp-photo-zone').style.display='block';
+  document.getElementById('vp-photo-in').value='';
+}
 function supprimerVeille(id){
   veille=veille.filter(v=>v.id!==id);
   localStorage.setItem('cyrell_veille',JSON.stringify(veille));
