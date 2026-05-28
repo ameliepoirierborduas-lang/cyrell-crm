@@ -1197,24 +1197,80 @@ function renderAnalyses(){
     const p=arr.map(d=>{const m=(d.notes||'').match(/(\d+[.,]\d+)\s*\$\/pi/);return m?parseFloat(m[1].replace(',','.')):null;}).filter(Boolean);
     return p.length?(p.reduce((a,b)=>a+b,0)/p.length).toFixed(2)+' $/pi²':'—';
   };
-  document.getElementById('a-400').textContent=getPrix(act.filter(d=>d.type?.includes('CYR-400')));
-  document.getElementById('a-300').textContent=getPrix(act.filter(d=>d.type?.includes('CYR-300')));
+  document.getElementById('a-400').textContent=getPrix(act.filter(d=>d.type?.includes('CYR-400')||d.type?.includes('cyr-400')));
+  document.getElementById('a-300').textContent=getPrix(act.filter(d=>d.type?.includes('CYR-300')||d.type?.includes('cyr-300')));
   document.getElementById('a-avg').textContent=act.length?fm(act.reduce((a,s)=>a+(s.valeur||0),0)/act.length):'—';
+
+  // Calculs projection
   const fer=DATA.filter(d=>['Gagné','Perdu'].includes(d.statut));
-  const taux=fer.length?DATA.filter(d=>d.statut==='Gagné').length/fer.length:0.3;
-  const valP=act.reduce((a,s)=>a+(s.valeur||0),0);const proj=valP*taux;
+  const nbGag=DATA.filter(d=>d.statut==='Gagné').length;
+  const taux=fer.length>=3?nbGag/fer.length:0.3;
+  const valP=act.reduce((a,s)=>a+(s.valeur||0),0);
+  const projPipeline=valP*taux;
+
+  // Projection annuelle basée sur rythme historique
+  const fp=getFiscalProgress();
+  const totalGagne=DATA.filter(d=>d.statut==='Gagné').reduce((a,s)=>a+(s.valeur||0),0);
+  const rythme=fp.elapsed>0?totalGagne/(fp.elapsed/30.4):0; // $ par mois
+  const projAnnuelle=fp.pctTime>0?totalGagne/fp.pctTime:0;
+  const manquant=Math.max(GOAL_ANNUAL-totalGagne,0);
+  const pctObj=Math.min(projAnnuelle/GOAL_ANNUAL*100,150);
+  const onTrack=projAnnuelle>=GOAL_ANNUAL*0.85;
+
   const now=new Date();
-  const projM=[1,2,3].map(i=>{const d=new Date(now.getFullYear(),now.getMonth()+i,1);return{label:d.toLocaleDateString('fr-CA',{month:'long'}),val:proj/3};});
+  const projM=[1,2,3].map(i=>{const d=new Date(now.getFullYear(),now.getMonth()+i,1);return{label:d.toLocaleDateString('fr-CA',{month:'long'}),val:projPipeline/3};});
+
+  const tooltip=`ℹ️ Comment les projections sont calculées`;
+  const tooltipContent=`La projection pipeline multiplie la valeur des soumissions actives (${fm(valP)}) par votre taux de conversion historique (${Math.round(taux*100)}%, basé sur ${fer.length} soumissions fermées).
+
+La projection annuelle divise vos gains réels depuis août 2025 (${fm(totalGagne)}) par le % de l'année écoulée (${Math.round(fp.pctTime*100)}%), pour estimer le total en juillet 2026.
+
+⚠️ Note : les données actuelles sont partielles — les projections seront plus précises au fur et à mesure que vous ajoutez vos soumissions historiques.`;
+
   document.getElementById('proj-wrap').innerHTML=`
-    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Taux estimé : <b style="color:var(--text)">${Math.round(taux*100)}%</b> · Pipeline : <b style="color:var(--accent)">${fm(valP)}</b></div>
-    ${projM.map(m=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div style="font-size:12px;color:var(--text2);width:80px;flex-shrink:0;text-transform:capitalize">${m.label}</div>
-      <div style="flex:1"><div class="prog"><div class="prog-fill" style="width:100%;background:var(--accent)"></div></div></div>
-      <div style="font-size:13px;font-weight:600;color:var(--accent);width:80px;text-align:right">${fm(m.val)}</div>
-    </div>`).join('')}
-    <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between">
-      <span style="font-size:12px;color:var(--text3)">Projection totale 3 mois</span>
-      <span style="font-size:16px;font-weight:700;color:var(--green)">${fm(proj)}</span>
+    <div style="background:var(--bg3);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--text2);line-height:1.7;border-left:3px solid var(--accent)">
+      <div style="font-weight:600;color:var(--text);margin-bottom:4px">ℹ️ Comment les projections sont calculées</div>
+      <div><b>Projection pipeline :</b> Valeur soumissions actives × taux de conversion historique (${Math.round(taux*100)}% sur ${fer.length} soumissions fermées${fer.length<5?' — peu de données, estimation à 30% par défaut':''}).</div>
+      <div style="margin-top:4px"><b>Projection annuelle :</b> Gains réels depuis août 2025 ÷ % année écoulée (${Math.round(fp.pctTime*100)}%). Suppose un rythme constant.</div>
+      <div style="margin-top:4px;color:var(--orange)">⚠️ Données partielles — projections approximatives jusqu'à ce que toutes les soumissions soient saisies.</div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600;color:var(--text)">🎯 Projection vs Objectif 30M$</span>
+        <span style="font-size:12px;font-weight:700;color:${onTrack?'var(--green)':'var(--red)'}">${onTrack?'✅ En voie':'⚠️ En retard'}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px">Projection annuelle (rythme actuel)</div>
+          <div style="font-size:20px;font-weight:800;color:${onTrack?'var(--green)':'var(--red)'}">${fm(projAnnuelle)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px">Objectif</div>
+          <div style="font-size:20px;font-weight:800;color:var(--text3)">${fm(GOAL_ANNUAL)}</div>
+        </div>
+      </div>
+      <div class="prog" style="height:10px;border-radius:6px">
+        <div class="prog-fill" style="width:${Math.min(pctObj,100)}%;height:100%;border-radius:6px;background:${onTrack?'var(--green)':pctObj>50?'var(--orange)':'var(--red)'}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
+        <span>${Math.round(pctObj)}% de l'objectif</span>
+        <span>Il manque ${fm(manquant)} · Rythme mensuel actuel : ${fm(rythme)}/mois</span>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:4px">
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">📅 Projection pipeline — 3 prochains mois</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Basée sur le pipeline actif de ${fm(valP)} × taux de conversion ${Math.round(taux*100)}%</div>
+      ${projM.map(m=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:12px;color:var(--text2);width:80px;flex-shrink:0;text-transform:capitalize">${m.label}</div>
+        <div style="flex:1"><div class="prog"><div class="prog-fill" style="width:${projPipeline>0?100:0}%;background:var(--accent)"></div></div></div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent);width:80px;text-align:right">${fm(m.val)}</div>
+      </div>`).join('')}
+      <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--text3)">Total 3 mois (pipeline)</span>
+        <span style="font-size:15px;font-weight:700;color:var(--green)">${fm(projPipeline)}</span>
+      </div>
     </div>`;
   mkChart('chart-stat','doughnut',['Soumis','Suivi en cours','Gagné','Perdu'],[{data:['Soumis','Suivi en cours','Gagné','Perdu'].map(s=>DATA.filter(d=>d.statut===s).length),backgroundColor:['#b8860b','#6b4fbb','#2d7a4f','#c0392b'],borderWidth:2,borderColor:'#fff'}],
     {plugins:{legend:{position:'bottom',labels:{color:'#6b6760',font:{size:11},boxWidth:12}}}});
@@ -1611,7 +1667,7 @@ function renderGoal(){
         <div style="font-size:11px;color:var(--text3);margin-top:2px">
           Août 2025 → Juillet 2026 · ${fp.monthsLeft} mois restant(s) · 
           <span style="color:${onTrack?'var(--green)':'var(--red)'}">
-            ${onTrack ? '✅ En voie d'atteindre l'objectif' : '⚠️ En retard sur l'objectif'}
+            ${onTrack ? '✅ En voie' : '⚠️ En retard'}
           </span>
           <span style="color:var(--text3);margin-left:8px">· données partielles</span>
         </div>
