@@ -78,7 +78,7 @@ ${text}`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 600,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -112,7 +112,7 @@ app.post('/api/chat', async (req, res) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 800,
         system: `Tu es l'assistant IA expert du CRM de Cyrell AMP, fabricant québécois de panneaux d'aluminium architectural (CYR-300, CYR-400, CYR-500/600, pliages, bacs, pare-soleil, pannes d'acier). Tu réponds en français canadien, de façon concise, professionnelle et orientée action. Tu fournis des analyses précises et des recommandations stratégiques basées sur les données réelles. Données pipeline en temps réel: ${context || 'Aucune donnée disponible'}`,
         messages: [{ role: 'user', content: message }]
