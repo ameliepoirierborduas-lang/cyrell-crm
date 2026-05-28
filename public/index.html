@@ -625,7 +625,12 @@ async function saveEntry(e){
 
 async function updateStatut(id,statut){
   if(!statut)return;
-  await api('/api/soumissions/'+id,{method:'PATCH',body:JSON.stringify({statut})});
+  const body={statut};
+  // Quand "Suivi fait" → repousser la date de suivi de 14 jours à partir d'aujourd'hui
+  if(statut==='Suivi en cours'){
+    body.date_suivi=addDays(today(),14);
+  }
+  await api('/api/soumissions/'+id,{method:'PATCH',body:JSON.stringify(body)});
   await loadData();
 }
 
