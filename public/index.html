@@ -1195,6 +1195,18 @@ function clearVeilleForm(){
   clearVeilleImg();
 }
 
+async function updateVeilleStatut(id, statut){
+  try{
+    await apiFetch('/api/veille/'+id,{method:'PATCH',body:JSON.stringify({statut})});
+    const v=VEILLE.find(x=>x.id===id);if(v)v.statut=statut;
+    renderVeille();
+  }catch(e){
+    const v=VEILLE.find(x=>x.id===id);if(v)v.statut=statut;
+    localStorage.setItem('c_veille',JSON.stringify(VEILLE));
+    renderVeille();
+  }
+}
+
 async function deleteVeille(id){
   try{await apiFetch('/api/veille/'+id,{method:'DELETE'});}catch(e){}
   VEILLE=VEILLE.filter(v=>v.id!==id);
@@ -1225,30 +1237,35 @@ function renderVeille(){
   el.innerHTML=`<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">${Object.entries(bc).filter(([,n])=>n>0).map(([s,n])=>`<span class="badge ${vsBadge(s)}">${s} (${n})</span>`).join('')}</div>`+
   liste.map(v=>`<div class="veille-card">
     <div style="display:flex;align-items:flex-start;gap:10px">
-      <div style="width:8px;height:8px;border-radius:50%;background:${phaseColor(v.phase)};flex-shrink:0;margin-top:5px"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:${phaseColor(v.phase)};flex-shrink:0;margin-top:6px"></div>
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px">
-          <div style="font-size:13px;font-weight:600">${v.nom_projet}</div>
-          <span class="badge ${vsBadge(v.statut)}">${v.statut}</span>
-          <span class="badge" style="background:var(--bg3);color:var(--text2)">${v.phase}</span>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${v.nom_projet}</div>
+          <span class="badge b-vendeur" style="background:var(--bg3);color:var(--text2)">${v.phase}</span>
           ${v.assigne_a?`<span class="badge b-vendeur">${v.assigne_a}</span>`:''}
+          ${v.valeur_estimee?`<span style="font-size:12px;font-weight:600;color:var(--accent)">💰 ~${fm(v.valeur_estimee,true)}</span>`:''}
         </div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text3)">
-          ${v.promoteur?`<span>🏗 ${v.promoteur}</span>`:''}
-          ${v.architecte?`<span style="color:var(--purple);font-weight:500">🏛 ${v.architecte}</span>`:''}
-          ${v.region?`<span>📍 ${v.region}</span>`:''}
-          ${v.source?`<span>📡 ${v.source}</span>`:''}
-          ${v.valeur_estimee?`<span>💰 ~${fm(v.valeur_estimee,true)}</span>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;margin-bottom:8px">
+          ${v.promoteur?`<span><span style="color:var(--text3)">Promoteur</span> <strong>${v.promoteur}</strong></span>`:''}
+          ${v.architecte?`<span><span style="color:var(--text3)">Architecte</span> <strong style="color:var(--purple)">${v.architecte}</strong></span>`:''}
+          ${v.region?`<span><span style="color:var(--text3)">Région</span> <strong>${v.region}</strong></span>`:''}
+          ${v.source?`<span><span style="color:var(--text3)">Source</span> <strong>${v.source}</strong></span>`:''}
         </div>
-        ${v.notes?`<div style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.5">${v.notes.substring(0,150)}${v.notes.length>150?'...':''}</div>`:''}
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:10px;color:var(--text3)">Repéré le ${fd(v.date_repere)}</div>
-        <div style="display:flex;gap:5px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap">
-          ${v.lien?`<a href="${v.lien}" target="_blank" class="btn sm">🔗</a>`:''}
+        ${v.notes?`<div style="font-size:12px;color:var(--text2);line-height:1.6;background:var(--bg3);border-radius:var(--rs);padding:8px 10px;margin-bottom:8px">${v.notes}</div>`:''}
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
+          <span style="font-size:11px;color:var(--text3)">Statut :</span>
+          <select onchange="updateVeilleStatut(${v.id},this.value)" style="font-size:11px;padding:4px 8px;max-width:220px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg2)">
+            <option value="Repéré" ${v.statut==='Repéré'?'selected':''}>🔵 Repéré</option>
+            <option value="Architecte contacté" ${v.statut==='Architecte contacté'?'selected':''}>🟣 Architecte contacté</option>
+            <option value="Spécifié" ${v.statut==='Spécifié'?'selected':''}>🟡 Spécifié</option>
+            <option value="Soumission demandée" ${v.statut==='Soumission demandée'?'selected':''}>🟢 Soumission demandée</option>
+            <option value="Pas intéressant" ${v.statut==='Pas intéressant'?'selected':''}>⚫ Pas intéressant</option>
+          </select>
+          ${v.lien?`<a href="${v.lien}" target="_blank" class="btn sm">🔗 Voir</a>`:''}
           <button class="btn success sm" onclick="convertVeille(${v.id})">→ Soumission</button>
-          <button class="btn danger sm" onclick="deleteVeille(${v.id})">✕</button>
+          <button class="btn danger sm" onclick="deleteVeille(${v.id})">✕ Supprimer</button>
         </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px">Repéré le ${fd(v.date_repere)}</div>
       </div>
     </div>
   </div>`).join('');
