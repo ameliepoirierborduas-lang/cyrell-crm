@@ -573,7 +573,7 @@ canvas{max-height:200px}
 </div>
 
 <script>
-const API=window.location.hostname==='localhost'?'http://localhost:3000':'';
+const API=window.location.hostname==='localhost'?'http://localhost:3000':'https://cyrell-crm.onrender.com';
 let data=[],veille=[],notes={},charts={};
 const VC={'Amélie':'#2c5f8a','Pierre Boulanger':'#2d7a4f','José':'#b8860b','Gabriel':'#6b4fbb','David Théroux':'#c0392b','J-F Urbain':'#d4691e'};
 function vc(v){return VC[v]||'#888';}
@@ -641,7 +641,7 @@ function saveNote(id,auteur,type,texte){
   renderPipeline();renderRappels();
 }
 
-function saveVeille(){
+async function saveVeille(){
   const nom=document.getElementById('vp-nom').value.trim();
   if(!nom){showMsg('Nom du projet requis.','s-error','veille-status');return;}
   const photoImg=document.getElementById('vp-photo-img');const photo=photoImg&&photoImg.src&&!photoImg.src.startsWith('data:,')?photoImg.src:null;
