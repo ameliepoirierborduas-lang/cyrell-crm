@@ -652,9 +652,11 @@ function renderDashboard(){
   const top5=[...actifs].sort((a,b)=>(b.valeur||0)-(a.valeur||0)).slice(0,5);
   document.getElementById('dash-top').innerHTML=top5.length?top5.map((s,i)=>{
     const j=du(s.date_suivi);const rc=j<=0?'b-urgent':j<=7?'b-warn':'b-ok';const rl=j<0?Math.abs(j)+'j ret.':j===0?'Auj.':j+'j';
+    const label=s.projet&&s.projet!==s.client?s.projet:s.client;
+    const sublabel=s.projet&&s.projet!==s.client?s.client:s.type;
     return`<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)${i===top5.length-1?';border-bottom:none':''}">
       <span style="font-size:12px;font-weight:700;color:var(--text3);width:14px;text-align:center">${i+1}</span>
-      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.client}</div><div style="font-size:10px;color:var(--text3)">${s.type}</div></div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</div><div style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sublabel}</div></div>
       <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:var(--accent)">${fm(s.valeur)}</div><span class="badge ${rc}">${rl}</span></div>
     </div>`;
   }).join(''):'<div class="empty" style="padding:1rem;font-size:12px">Aucune soumission active</div>';
@@ -753,7 +755,7 @@ function renderRappels(){
     const rl=j<0?`Retard ${Math.abs(j)}j`:j===0?"Aujourd'hui":`Dans ${j}j`;
     return`<div class="pipe-card ${u?'cl-red':j<=3?'cl-orange':''}">
       <div class="pipe-top">
-        <div style="min-width:0;flex:1"><div class="pipe-name">${s.client}</div><div class="pipe-type">${s.type}${s.numero?' · '+s.numero:''}</div></div>
+        <div style="min-width:0;flex:1"><div class="pipe-name">${s.client}${s.projet&&s.projet!==s.client?' <span style="color:var(--text3);font-weight:400">— '+s.projet+'</span>':''}</div><div class="pipe-type">${s.type}${s.numero?' · No.'+s.numero:''}</div></div>
         <span class="badge ${u?'b-urgent':'b-warn'}">${rl}</span>
       </div>
       <div class="pipe-meta">
