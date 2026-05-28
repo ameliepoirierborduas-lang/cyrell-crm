@@ -485,12 +485,34 @@ canvas{max-height:200px}
           <div class="fg"><label>Devise</label><select id="e-devise"><option value="CAD">CAD $</option><option value="USD">USD $</option></select></div>
           <div class="fg"><label>Type *</label>
             <select id="e-type"><option value="">Sélectionner</option>
-              <option>Panneaux CYR-400 rectangulaires</option><option>Panneaux CYR-400 formes irrégulières</option>
-              <option>Panneaux CYR-400 mixte</option><option>Panneaux CYR-300</option>
-              <option>Panneaux CYR-500/600</option><option>Panneaux anodisés</option>
-              <option>Pliages aluminium</option><option>Bacs de plantation</option>
-              <option>Pare-soleil</option><option>Plaques aluminium</option>
-              <option>Pannes d'acier</option><option>Autre</option>
+                <optgroup label="Panneaux CYR — Peints">
+                  <option>CYR-100 peint</option>
+                  <option>CYR-300 peint</option>
+                  <option>CYR-400 peint</option>
+                  <option>CYR-500 peint</option>
+                  <option>CYR-600 peint</option>
+                  <option>CYR-800 peint</option>
+                  <option>CYR-900 peint</option>
+                </optgroup>
+                <optgroup label="Panneaux CYR — Anodisés">
+                  <option>CYR-100 anodisé</option>
+                  <option>CYR-300 anodisé</option>
+                  <option>CYR-400 anodisé</option>
+                  <option>CYR-500 anodisé</option>
+                  <option>CYR-600 anodisé</option>
+                  <option>CYR-800 anodisé</option>
+                  <option>CYR-900 anodisé</option>
+                </optgroup>
+                <optgroup label="Autres produits">
+                  <option>Bacs de plantation</option>
+                  <option>Jardinières</option>
+                  <option>Pare-soleil</option>
+                  <option>Shadowbox</option>
+                  <option>Pliages aluminium</option>
+                  <option>Plaques aluminium</option>
+                  <option>Pannes d'acier</option>
+                  <option>Autre</option>
+                </optgroup>
             </select>
           </div>
           <div class="fg"><label>Date *</label><input type="date" id="e-date"/></div>
@@ -517,11 +539,34 @@ canvas{max-height:200px}
           <div class="fg"><label>Devise</label><select id="m-devise"><option value="CAD">CAD $</option><option value="USD">USD $</option></select></div>
           <div class="fg"><label>Type *</label>
             <select id="m-type"><option value="">Sélectionner</option>
-              <option>Panneaux CYR-400 rectangulaires</option><option>Panneaux CYR-400 mixte</option>
-              <option>Panneaux CYR-300</option><option>Panneaux CYR-500/600</option>
-              <option>Panneaux anodisés</option><option>Pliages aluminium</option>
-              <option>Bacs de plantation</option><option>Pare-soleil</option>
-              <option>Plaques aluminium</option><option>Pannes d'acier</option><option>Autre</option>
+                <optgroup label="Panneaux CYR — Peints">
+                  <option>CYR-100 peint</option>
+                  <option>CYR-300 peint</option>
+                  <option>CYR-400 peint</option>
+                  <option>CYR-500 peint</option>
+                  <option>CYR-600 peint</option>
+                  <option>CYR-800 peint</option>
+                  <option>CYR-900 peint</option>
+                </optgroup>
+                <optgroup label="Panneaux CYR — Anodisés">
+                  <option>CYR-100 anodisé</option>
+                  <option>CYR-300 anodisé</option>
+                  <option>CYR-400 anodisé</option>
+                  <option>CYR-500 anodisé</option>
+                  <option>CYR-600 anodisé</option>
+                  <option>CYR-800 anodisé</option>
+                  <option>CYR-900 anodisé</option>
+                </optgroup>
+                <optgroup label="Autres produits">
+                  <option>Bacs de plantation</option>
+                  <option>Jardinières</option>
+                  <option>Pare-soleil</option>
+                  <option>Shadowbox</option>
+                  <option>Pliages aluminium</option>
+                  <option>Plaques aluminium</option>
+                  <option>Pannes d'acier</option>
+                  <option>Autre</option>
+                </optgroup>
             </select>
           </div>
           <div class="fg"><label>Date *</label><input type="date" id="m-date"/></div>
@@ -793,8 +838,9 @@ function renderDashboard(){
     {plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#888',font:{size:11},callback:x=>fm(x,true)},grid:{color:'#f0ede8'}}}});
 
   const types=[...new Set(DATA.map(d=>d.type).filter(Boolean))].slice(0,6);
-  mkChart('chart-t','doughnut',types,[{data:types.map(t=>DATA.filter(d=>d.type===t).length),backgroundColor:['#2c5f8a','#2d7a4f','#b8860b','#6b4fbb','#c0392b','#d4691e'],borderWidth:2,borderColor:'#fff'}],
-    {plugins:{legend:{position:'right',labels:{color:'#6b6760',font:{size:10},boxWidth:11}}}});
+  const total=DATA.length||1;
+  mkChart('chart-t','doughnut',types.map(t=>{const n=DATA.filter(d=>d.type===t).length;return`${t} (${Math.round(n/total*100)}%)`}),[{data:types.map(t=>DATA.filter(d=>d.type===t).length),backgroundColor:['#2c5f8a','#2d7a4f','#b8860b','#6b4fbb','#c0392b','#d4691e'],borderWidth:2,borderColor:'#fff'}],
+    {plugins:{legend:{position:'right',labels:{color:'#6b6760',font:{size:10},boxWidth:11}},tooltip:{callbacks:{label:ctx=>`${ctx.raw} soumissions (${Math.round(ctx.raw/total*100)}%)`}}}});
 
   const top5=[...act].sort((a,b)=>(b.valeur||0)-(a.valeur||0)).slice(0,5);
   document.getElementById('top5').innerHTML=top5.length?top5.map((s,i)=>{
@@ -980,7 +1026,7 @@ function openClient(name){
   const tv=cd.reduce((a,s)=>a+(s.valeur||0),0);
   const act=cd.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
   const gag=cd.filter(d=>d.statut==='Gagné');
-  const g=gr(tv,cd.length);
+  const fer2=cd.filter(d=>['Gagné','Perdu'].includes(d.statut));const taux3=fer2.length?gag.length/fer2.length:0;const g=gradeClient(tv,cd.length,taux3);
   const contacts=[...new Set(cd.map(d=>d.contact).filter(Boolean))];
   const vends=[...new Set(cd.map(d=>d.vendeur).filter(Boolean))];
   document.getElementById('cm-av').textContent=name.substring(0,2).toUpperCase();
@@ -1050,40 +1096,67 @@ function renderVendeurs(){
 }
 
 // ── CLIENTS ───────────────────────────────────────────────────────────────────
+function gradeClient(tv,nbProjets,taux){
+  if(tv>=800000)return'A';
+  if(tv>=500000&&taux>=0.3)return'A';
+  if(nbProjets>=3&&taux>=0.2)return'A';
+  if(tv>=100000)return'B';
+  if(nbProjets>=2)return'B';
+  if(tv>=20000)return'C';
+  return'D';
+}
+
 function renderClients(){
-  const cs=[...new Set(DATA.map(d=>d.client).filter(Boolean))].map(c=>{
+  const noms=[...new Set(DATA.map(d=>d.client).filter(Boolean))];
+  const cs=noms.map(c=>{
     const cd=DATA.filter(d=>d.client===c);
     const act=cd.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
     const gag=cd.filter(d=>d.statut==='Gagné');
+    const fer=cd.filter(d=>['Gagné','Perdu'].includes(d.statut));
     const tv=cd.reduce((a,s)=>a+(s.valeur||0),0);
-    return{c,count:cd.length,actifs:act.length,valActif:act.reduce((a,s)=>a+(s.valeur||0),0),gag:gag.length,valGag:gag.reduce((a,s)=>a+(s.valeur||0),0),tv,g:gr(tv,cd.length),vend:[...new Set(cd.map(d=>d.vendeur).filter(Boolean))][0]||'—',last:cd.map(d=>d.date).sort().reverse()[0],contacts:[...new Set(cd.map(d=>d.contact).filter(Boolean))]};
-  }).sort((a,b)=>b.tv-a.tv);
+    const taux=fer.length?gag.length/fer.length:0;
+    const vends=[...new Set(cd.map(d=>d.vendeur).filter(Boolean))];
+    const contacts=[...new Set(cd.map(d=>d.contact).filter(Boolean))];
+    const g=gradeClient(tv,cd.length,taux);
+    const moy=cd.length?tv/cd.length:0;
+    return{c,count:cd.length,actifs:act.length,valActif:act.reduce((a,s)=>a+(s.valeur||0),0),gag:gag.length,valGag:gag.reduce((a,s)=>a+(s.valeur||0),0),tv,taux,vends,contacts,g,moy,last:cd.map(d=>d.date).sort().reverse()[0]};
+  }).sort((a,b)=>{const go={A:0,B:1,C:2,D:3};if(go[a.g]!==go[b.g])return go[a.g]-go[b.g];return b.tv-a.tv;});
+
   const gc={A:0,B:0,C:0,D:0};cs.forEach(s=>gc[s.g]++);
   ['a','b','c','d'].forEach(g=>document.getElementById('gc-'+g).textContent=gc[g.toUpperCase()]||'0');
   const maxV=cs[0]?.tv||1;
-  document.getElementById('clients-list').innerHTML=cs.map(s=>`
-    <div class="pipe-card" style="cursor:pointer" onclick="openClient('${esc(s.c)}')">
+  const glabels={A:'🏆 Grade A — Clients prioritaires',B:'⭐ Grade B — Clients importants',C:'📋 Grade C — Clients actifs',D:'📁 Grade D — Petits clients'};
+  let html='';let lastG='';
+  cs.forEach(s=>{
+    if(s.g!==lastG){html+=`<div class="sep" style="color:${s.g==='A'?'var(--gold)':s.g==='B'?'var(--text2)':s.g==='C'?'var(--orange)':'var(--text3)'}">${glabels[s.g]} <span class="sep-n">${gc[s.g]}</span></div>`;lastG=s.g;}
+    const tc=s.taux>=0.5?'var(--green)':s.taux>=0.25?'var(--orange)':'var(--red)';
+    html+=`<div class="pipe-card" style="cursor:pointer" onclick="openClient('${esc(s.c)}')">
       <div style="display:flex;align-items:center;gap:11px">
         <div class="grade g${s.g}">${s.g}</div>
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px">
             <div style="font-size:13px;font-weight:600;color:var(--accent)">${s.c}</div>
             ${s.contacts.length?`<span class="badge" style="background:var(--bg3);color:var(--text2)">${s.contacts[0]}</span>`:''}
-            <span class="badge b-vendeur">${s.vend}</span>
           </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">Dernière: ${fd(s.last)} · Cliquer pour la fiche complète</div>
-          <div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:${Math.round(s.tv/maxV*100)}%;background:${s.g==='A'?'var(--gold)':s.g==='B'?'#999':s.g==='C'?'var(--orange)':'var(--border2)'}"></div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:5px">
+            ${s.vends.map(v=>`<span style="font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;background:${vc(v)}22;color:${vc(v)}">${v}</span>`).join('')}
+          </div>
+          <div class="prog"><div class="prog-fill" style="width:${Math.round(s.tv/maxV*100)}%;background:${s.g==='A'?'var(--gold)':s.g==='B'?'#999':s.g==='C'?'var(--orange)':'var(--border2)'}"></div></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">Dernière: ${fd(s.last)}</div>
         </div>
-        <div style="text-align:right;flex-shrink:0;min-width:110px">
+        <div style="text-align:right;flex-shrink:0;min-width:130px">
           <div style="font-size:15px;font-weight:700">${fm(s.tv)}</div>
-          <div style="font-size:10px;color:var(--text3)">${s.count} soumission(s)</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${s.count} soumission(s) · moy. ${fm(s.moy,true)}</div>
+          <div style="font-size:12px;font-weight:600;color:${tc};margin-top:3px">Taux: ${s.taux>0?Math.round(s.taux*100)+'%':'—'}</div>
           <div style="display:flex;gap:5px;margin-top:5px;justify-content:flex-end;flex-wrap:wrap">
             ${s.actifs?`<span class="badge b-soumis">${s.actifs} actives</span>`:''}
             ${s.gag?`<span class="badge b-gagne">${s.gag} gagnées</span>`:''}
           </div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  });
+  document.getElementById('clients-list').innerHTML=html;
 }
 
 // ── ANALYSES ──────────────────────────────────────────────────────────────────
