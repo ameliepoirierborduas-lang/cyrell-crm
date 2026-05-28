@@ -1118,7 +1118,20 @@ function renderAnalyses(){
 // ── VEILLE ────────────────────────────────────────────────────────────────────
 function toggleVeilleForm(){
   const f=document.getElementById('veille-form-wrap');
-  f.style.display=f.style.display==='none'?'block':'none';
+  const isOpening=f.style.display==='none';
+  f.style.display=isOpening?'block':'none';
+  if(isOpening){
+    // Vider tous les champs à l'ouverture
+    ['vp-nom','vp-promoteur','vp-architecte','vp-region','vp-valeur','vp-lien','vp-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    document.getElementById('vp-type').value='';
+    document.getElementById('vp-source').value='';
+    document.getElementById('vp-phase').value='Concept';
+    document.getElementById('vp-statut').value='Repéré';
+    document.getElementById('vp-assigne').value='';
+    clearVeilleImg();
+    document.getElementById('vp-img-status').innerHTML='';
+    document.getElementById('veille-status').innerHTML='';
+  }
 }
 
 async function handleVeilleImg(file){
@@ -1172,7 +1185,13 @@ async function saveVeille(){
 
 function clearVeilleForm(){
   ['vp-nom','vp-promoteur','vp-architecte','vp-region','vp-valeur','vp-lien','vp-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  ['vp-type','vp-source'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const typeEl=document.getElementById('vp-type');if(typeEl)typeEl.value='';
+  const srcEl=document.getElementById('vp-source');if(srcEl)srcEl.value='';
+  const phaseEl=document.getElementById('vp-phase');if(phaseEl)phaseEl.value='Concept';
+  const statutEl=document.getElementById('vp-statut');if(statutEl)statutEl.value='Repéré';
+  const assigneEl=document.getElementById('vp-assigne');if(assigneEl)assigneEl.value='';
+  const statusEl=document.getElementById('vp-img-status');if(statusEl)statusEl.innerHTML='';
+  const statusVeille=document.getElementById('veille-status');if(statusVeille)statusVeille.innerHTML='';
   clearVeilleImg();
 }
 
