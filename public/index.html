@@ -410,13 +410,17 @@ canvas{max-height:200px}
       </div>
       <div class="form-group full"><label>Lien (Agora, LinkedIn...)</label><input id="vp-lien" placeholder="https://..."/></div>
       <div class="form-group full"><label>Notes</label><textarea id="vp-notes" placeholder="Contexte, contacts, prochaines étapes..."></textarea></div>
-      <div class="form-group full"><label>Photo / Capture d'écran (optionnel)</label>
-        <div id="vp-photo-zone" style="border:2px dashed var(--border2);border-radius:var(--rsm);padding:1rem;text-align:center;cursor:pointer;background:var(--bg3);font-size:12px;color:var(--text3)" onclick="document.getElementById('vp-photo-in').click()">
-          📷 Cliquer pour ajouter une photo ou capture d'écran
-          <input type="file" id="vp-photo-in" accept="image/*" style="display:none" onchange="previewVeillePhoto(this)"/>
+      <div class="form-group full">
+        <label>📷 Screenshot LinkedIn / Agora / SEAO — extraction IA automatique!</label>
+        <div id="vp-photo-zone" style="border:2px dashed var(--border2);border-radius:var(--rsm);padding:1.5rem;text-align:center;cursor:pointer;background:var(--bg3);transition:all .15s" onclick="document.getElementById('vp-photo-in').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';handleVeilleScreenshot(event.dataTransfer.files[0])">
+          <div style="font-size:1.5rem;margin-bottom:6px">📷</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Glisser ou cliquer pour uploader un screenshot</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">LinkedIn, Agora, SEAO, site web... l'IA extrait les données automatiquement</div>
+          <input type="file" id="vp-photo-in" accept="image/*" style="display:none" onchange="handleVeilleScreenshot(this.files[0])"/>
         </div>
+        <div id="vp-screenshot-status"></div>
         <div id="vp-photo-preview" style="display:none;margin-top:8px;position:relative">
-          <img id="vp-photo-img" style="max-width:100%;max-height:200px;border-radius:var(--rsm);border:1px solid var(--border);object-fit:cover"/>
+          <img id="vp-photo-img" style="max-width:100%;max-height:180px;border-radius:var(--rsm);border:1px solid var(--border);object-fit:cover"/>
           <button onclick="clearVeillePhoto()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;line-height:1">✕</button>
         </div>
       </div>
@@ -637,8 +641,16 @@ function saveVeille(){
   if(!nom){showMsg('Nom du projet requis.','s-error','veille-status');return;}
   const photoImg=document.getElementById('vp-photo-img');const photo=photoImg&&photoImg.src&&!photoImg.src.startsWith('data:,')?photoImg.src:null;
   const entry={id:Date.now(),nom_projet:nom,promoteur:document.getElementById('vp-promoteur').value.trim(),architecte:document.getElementById('vp-architecte').value.trim(),region:document.getElementById('vp-region').value.trim(),valeur_estimee:Number(document.getElementById('vp-valeur').value)||null,type_produit:document.getElementById('vp-type').value,source:document.getElementById('vp-source').value,phase:document.getElementById('vp-phase').value,statut:document.getElementById('vp-statut').value,assigne_a:document.getElementById('vp-assigne').value,lien:document.getElementById('vp-lien').value.trim(),notes:document.getElementById('vp-notes').value.trim(),date_repere:today(),photo};
-  veille.unshift(entry);
-  localStorage.setItem('cyrell_veille',JSON.stringify(veille));
+  // Save to Supabase
+  try{
+    const row={nom_projet:entry.nom_projet,promoteur:entry.promoteur||null,architecte:entry.architecte||null,region:entry.region||null,valeur_estimee:entry.valeur_estimee||null,type_produit:entry.type_produit||null,source:entry.source||null,phase:entry.phase,statut:entry.statut,assigne_a:entry.assigne_a||null,lien:entry.lien||null,notes:entry.notes||null,date_repere:entry.date_repere};
+    const saved=await api('/api/veille',{method:'POST',body:JSON.stringify(row)});
+    veille.unshift(Array.isArray(saved)?saved[0]:saved);
+  }catch(e){
+    // fallback localStorage
+    veille.unshift(entry);
+    localStorage.setItem('cyrell_veille',JSON.stringify(veille));
+  }
   showMsg('✅ Projet ajouté à la veille!','s-success','veille-status');
   setTimeout(()=>{toggleVeilleForm();renderVeille();},1000);
 }
@@ -1170,15 +1182,37 @@ function renderVeille(){
     </div>`).join('');
 }
 
-function previewVeillePhoto(input){
-  if(!input.files||!input.files[0])return;
+async function handleVeilleScreenshot(file){
+  if(!file)return;
+  // Show preview
   const reader=new FileReader();
   reader.onload=e=>{
     document.getElementById('vp-photo-img').src=e.target.result;
     document.getElementById('vp-photo-preview').style.display='block';
-    document.getElementById('vp-photo-zone').style.display='none';
   };
-  reader.readAsDataURL(input.files[0]);
+  reader.readAsDataURL(file);
+  // Extract with AI
+  showMsg('<span class="spinner"></span> Analyse IA du screenshot en cours...','s-info','vp-screenshot-status');
+  try{
+    const fd=new FormData();fd.append('image',file);
+    const r=await fetch(API+'/api/extract-screenshot',{method:'POST',body:fd});
+    const result=await r.json();
+    if(!r.ok)throw new Error(result.error||'Erreur');
+    const p=result.data;
+    if(p.nom_projet)document.getElementById('vp-nom').value=p.nom_projet;
+    if(p.promoteur)document.getElementById('vp-promoteur').value=p.promoteur;
+    if(p.architecte)document.getElementById('vp-architecte').value=p.architecte;
+    if(p.region)document.getElementById('vp-region').value=p.region;
+    if(p.valeur_estimee)document.getElementById('vp-valeur').value=p.valeur_estimee;
+    if(p.type_produit){const sel=document.getElementById('vp-type');for(const o of sel.options)if(o.value.includes(p.type_produit.split(' ')[1]||'')){sel.value=o.value;break;}}
+    if(p.source)document.getElementById('vp-source').value=p.source;
+    if(p.phase)document.getElementById('vp-phase').value=p.phase;
+    if(p.notes)document.getElementById('vp-notes').value=p.notes;
+    if(p.lien)document.getElementById('vp-lien').value=p.lien;
+    showMsg('✅ Données extraites du screenshot! Vérifiez et complétez.','s-success','vp-screenshot-status');
+  }catch(e){
+    showMsg('Extraction partielle — complétez manuellement. ('+e.message+')','s-warn','vp-screenshot-status');
+  }
 }
 function clearVeillePhoto(){
   document.getElementById('vp-photo-img').src='';
@@ -1186,7 +1220,8 @@ function clearVeillePhoto(){
   document.getElementById('vp-photo-zone').style.display='block';
   document.getElementById('vp-photo-in').value='';
 }
-function supprimerVeille(id){
+async function supprimerVeille(id){
+  try{await api('/api/veille/'+id,{method:'DELETE'});}catch(e){}
   veille=veille.filter(v=>v.id!==id);
   localStorage.setItem('cyrell_veille',JSON.stringify(veille));
   renderVeille();
