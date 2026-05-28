@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cyrell AMP — CRM Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#f8f7f4;--bg2:#fff;--bg3:#f3f2ef;--bg4:#ebe9e4;
+  --border:#e8e6e1;--border2:#d4d1ca;
+  --text:#1a1814;--text2:#6b6760;--text3:#a09d96;
+  --accent:#2c5f8a;--accent2:#3a7ab8;--accent-bg:#eef4fa;
+  --gold:#b8860b;--gold-bg:#fdf6e3;
+  --green:#2d7a4f;--green-bg:#eaf5ef;
+  --red:#c0392b;--red-bg:#fdf0ee;
+  --orange:#d4691e;--orange-bg:#fdf3ea;
+  --purple:#6b4fbb;--purple-bg:#f0ecfb;
+  --r:10px;--rsm:6px;--rlg:14px;
+  --shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 4px 24px rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;font-size:14px;line-height:1.5;overflow:hidden}
+.app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:58px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:12px;box-shadow:0 1px 0 var(--border)}
+.logo-wrap{display:flex;align-items:center;gap:9px;width:210px;flex-shrink:0}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.logo-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.logo-name span{color:var(--text3);font-weight:400}
+.search-wrap{flex:1;max-width:380px;display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 12px}
+.search-wrap input{background:none;border:none;color:var(--text);font-size:13px;width:100%;outline:none;font-family:inherit}
+.search-wrap input::placeholder{color:var(--text3)}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.tb-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:inherit;transition:all .15s}
+.tb-btn:hover{background:var(--bg3)}
+.tb-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tb-btn.primary:hover{background:var(--accent2)}
+.notif{position:relative;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
+.notif-dot{position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--red);border:2px solid var(--bg2)}
+.av-btn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;color:#fff;flex-shrink:0}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.nav-group{padding:.5rem 0}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:6px 1.125rem 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 1.125rem;font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s;margin:1px 8px;border-radius:7px}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.nav-icon{width:18px;text-align:center;font-size:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:600;color:#fff;background:var(--red)}
+.nav-badge.blue{background:var(--accent)}
+.sidebar-footer{margin-top:auto;padding:.875rem;border-top:1px solid var(--border)}
+.sb-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px}
+.sb-row span:first-child{color:var(--text3)}
+.sb-row span:last-child{font-weight:600;color:var(--text)}
+.main{overflow-y:auto;background:var(--bg)}
+.panel{display:none;padding:1.5rem;min-height:100%}
+.panel.active{display:block}
+.ph-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:1.5rem}
+.page-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.4px}
+.page-sub{font-size:13px;color:var(--text3);margin-top:3px}
+.page-actions{display:flex;gap:8px;flex-shrink:0}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.125rem 1.25rem;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:700;line-height:1.1;letter-spacing:-.5px}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.grid-60{display:grid;grid-template-columns:3fr 2fr;gap:1rem}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;box-shadow:var(--shadow)}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.pipe-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.125rem;margin-bottom:8px;box-shadow:var(--shadow);transition:all .15s}
+.pipe-card:hover{box-shadow:var(--shadow-lg);border-color:var(--border2)}
+.pipe-card.urgent{border-left:3px solid var(--red)}
+.pipe-card.warn-c{border-left:3px solid var(--orange)}
+.pipe-card.high-c{border-left:3px solid var(--gold)}
+.pipe-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.pipe-name{font-size:13px;font-weight:600;color:var(--text)}
+.pipe-proj{font-size:11px;color:var(--text3);margin-top:2px}
+.pipe-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.pipe-val{font-size:15px;font-weight:700;color:var(--text)}
+.pipe-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center;font-size:11px;color:var(--text3)}
+.pipe-notes{font-size:12px;color:var(--text2);margin-top:8px;border-top:1px solid var(--border);padding-top:8px;line-height:1.6}
+.pipe-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.crm-expand{display:none}
+.crm-expand.open{display:block}
+.crm-note{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 12px;margin-bottom:6px}
+.crm-note-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:6px}
+.crm-note-author{font-size:11px;font-weight:600;color:var(--accent)}
+.crm-note-date{font-size:10px;color:var(--text3)}
+.crm-note-text{font-size:12px;color:var(--text2);line-height:1.6}
+.nt-appel{background:#e3f2fd;color:#1565c0;font-size:10px;padding:1px 6px;border-radius:20px;font-weight:500}
+.nt-email{background:#f3e5f5;color:#6a1b9a;font-size:10px;padding:1px 6px;border-radius:20px;font-weight:500}
+.nt-reunion{background:#e8f5e9;color:#2e7d32;font-size:10px;padding:1px 6px;border-radius:20px;font-weight:500}
+.nt-note{background:#fff8e1;color:#f57f17;font-size:10px;padding:1px 6px;border-radius:20px;font-weight:500}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.b-soumis{background:#fff8e1;color:#b8860b}
+.b-suivi{background:var(--purple-bg);color:var(--purple)}
+.b-gagne{background:var(--green-bg);color:var(--green)}
+.b-perdu{background:var(--red-bg);color:var(--red)}
+.b-urgent{background:var(--red-bg);color:var(--red)}
+.b-warn{background:var(--orange-bg);color:var(--orange)}
+.b-ok{background:var(--green-bg);color:var(--green)}
+.b-vendeur{background:var(--accent-bg);color:var(--accent)}
+.b-gray{background:var(--bg3);color:var(--text2)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--rsm);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:inherit;transition:all .15s}
+.btn:hover{background:var(--bg3);border-color:var(--border2)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent2)}
+.btn.success{background:var(--green-bg);color:var(--green);border-color:rgba(45,122,79,.2)}
+.btn.danger{background:var(--red-bg);color:var(--red);border-color:rgba(192,57,43,.2)}
+.btn.sm{padding:5px 10px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.form-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.form-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:1rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+label{font-size:11px;font-weight:500;color:var(--text2)}
+input,select,textarea{width:100%;padding:8px 10px;font-size:13px;font-family:inherit;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);transition:border .15s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:var(--bg2)}
+input::placeholder,textarea::placeholder{color:var(--text3)}
+textarea{resize:vertical;min-height:70px}
+.status-msg{font-size:12px;padding:9px 13px;border-radius:var(--rsm);margin-top:10px;line-height:1.6}
+.s-success{background:var(--green-bg);color:var(--green);border:1px solid rgba(45,122,79,.2)}
+.s-info{background:var(--accent-bg);color:var(--accent);border:1px solid rgba(44,95,138,.2)}
+.s-error{background:var(--red-bg);color:var(--red);border:1px solid rgba(192,57,43,.2)}
+.s-warn{background:var(--orange-bg);color:var(--orange);border:1px solid rgba(212,105,30,.2)}
+.filter-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{font-size:12px;padding:7px 10px;max-width:170px}
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:2.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-bg)}
+.drop-icon{font-size:2.5rem;display:block;margin-bottom:12px}
+.drop-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--text3)}
+.pdf-preview{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);padding:12px;margin:12px 0;font-size:11px}
+.chat-outer{display:flex;flex-direction:column;height:calc(100vh - 180px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.chat-hdr{padding:.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.chat-ai-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:16px}
+.chat-ai-status{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px}
+.chat-ai-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block}
+.chat-msgs{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.msg{max-width:80%;font-size:13px;line-height:1.65;padding:10px 14px;border-radius:12px}
+.msg-user{background:var(--accent);color:#fff;align-self:flex-end;border-radius:12px 12px 3px 12px;font-weight:500}
+.msg-ai{background:var(--bg2);color:var(--text);align-self:flex-start;border:1px solid var(--border);border-radius:3px 12px 12px 12px;box-shadow:var(--shadow)}
+.typing{background:var(--bg2);border:1px solid var(--border);align-self:flex-start;padding:10px 16px;border-radius:3px 12px 12px 12px}
+.dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite;margin:0 2px}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.chat-chips{padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;background:var(--bg2)}
+.chip{font-size:11px;padding:5px 11px;border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--text2);background:var(--bg2);font-family:inherit;transition:all .15s}
+.chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.chat-input-row{padding:.875rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg2)}
+.chat-input-row input{flex:1;font-size:13px}
+.client-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.125rem;margin-bottom:8px;box-shadow:var(--shadow);transition:all .15s}
+.client-card:hover{box-shadow:var(--shadow-lg)}
+.grade-badge{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.grade-A{background:linear-gradient(135deg,#ffd700,#ffa500);color:#000}
+.grade-B{background:linear-gradient(135deg,#c0c0c0,#a0a0a0);color:#000}
+.grade-C{background:linear-gradient(135deg,#cd7f32,#a0522d);color:#fff}
+.grade-D{background:var(--bg3);color:var(--text2)}
+.vendor-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.125rem;margin-bottom:8px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.rank-num{font-size:18px;font-weight:800;width:24px;text-align:center;flex-shrink:0}
+.rank-1{color:#b8860b}.rank-2{color:#888}.rank-3{color:#cd7f32}
+.vendor-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;color:#fff}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg3)}
+.tbl td{padding:10px 12px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg3)}
+.tbl .val{font-weight:600;color:var(--text)}
+.sep{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 0 6px;margin-top:8px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sep:first-child{border-top:none;margin-top:0;padding-top:0}
+.sep-n{background:var(--bg3);color:var(--text2);border-radius:20px;padding:1px 7px;font-size:10px}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+canvas{max-height:220px}
+@media(max-width:880px){.app{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:1fr 1fr}.grid-2,.grid-3,.grid-60{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">C</div>
+    <div class="logo-name">Cyrell <span>CRM Pro</span></div>
+  </div>
+  <div class="search-wrap">
+    <span style="color:var(--text3)">🔍</span>
+    <input id="global-search" placeholder="Rechercher client, projet, vendeur..." oninput="doSearch(this.value)"/>
+  </div>
+  <div class="topbar-right">
+    <select id="g-vendeur" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg2);max-width:150px" onchange="onVendeurChange()">
+      <option value="">Tous les vendeurs</option>
+      <option>Amélie</option><option>Pierre Boulanger</option><option>José</option>
+      <option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option>
+    </select>
+    <div class="notif" onclick="showPanel('rappels')">🔔<div class="notif-dot" id="notif-dot" style="display:none"></div></div>
+    <div class="av-btn" id="user-av" style="background:var(--accent)">?</div>
+    <button class="tb-btn primary" onclick="showPanel('ajouter')">＋ Nouvelle soumission</button>
+  </div>
+</div>
+
+<div class="sidebar">
+  <div class="nav-group">
+    <div class="nav-label">Vue d'ensemble</div>
+    <div class="nav-item active" onclick="showPanel('dashboard')" data-panel="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="showPanel('pipeline')" data-panel="pipeline"><span class="nav-icon">📋</span>Pipeline<span class="nav-badge blue" id="nb-pipe" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPanel('rappels')" data-panel="rappels"><span class="nav-icon">🔔</span>Rappels<span class="nav-badge" id="nb-rapp" style="display:none">0</span></div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Équipe & Clients</div>
+    <div class="nav-item" onclick="showPanel('vendeurs')" data-panel="vendeurs"><span class="nav-icon">🏆</span>Classement vendeurs</div>
+    <div class="nav-item" onclick="showPanel('clients')" data-panel="clients"><span class="nav-icon">🏢</span>Grading clients</div>
+    <div class="nav-item" onclick="showPanel('analyses')" data-panel="analyses"><span class="nav-icon">📈</span>Analyses & Prix</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Outils</div>
+    <div class="nav-item" onclick="showPanel('ajouter')" data-panel="ajouter"><span class="nav-icon">📤</span>Ajouter (PDF)</div>
+    <div class="nav-item" onclick="showPanel('ia')" data-panel="ia"><span class="nav-icon">🤖</span>Assistant IA</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sb-row"><span>Pipeline actif</span><span id="sb-val" style="color:var(--accent)">—</span></div>
+    <div class="sb-row"><span>Soumissions</span><span id="sb-count">—</span></div>
+    <div style="height:1px;background:var(--border);margin:6px 0"></div>
+    <div class="sb-row"><span>Rappels urgents</span><span id="sb-urg" style="color:var(--red)">—</span></div>
+    <div class="sb-row"><span>Gagnés</span><span id="sb-gag" style="color:var(--green)">—</span></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="ph-row">
+      <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-date">—</div></div>
+      <div class="page-actions"><button class="btn sm" onclick="loadData()">↻ Actualiser</button></div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Valeur pipeline actif</div><div class="stat-value" id="d-val" style="color:var(--accent)">—</div><div class="stat-sub" id="d-val-sub">—</div></div>
+      <div class="stat-card"><div class="stat-label">Contrats gagnés</div><div class="stat-value" id="d-gag" style="color:var(--green)">—</div><div class="stat-sub" id="d-gag-sub">—</div></div>
+      <div class="stat-card"><div class="stat-label">Rappels urgents</div><div class="stat-value" id="d-urg" style="color:var(--red)">—</div><div class="stat-sub">suivis en retard</div></div>
+      <div class="stat-card"><div class="stat-label">Soumissions ce mois</div><div class="stat-value" id="d-30" style="color:var(--gold)">—</div><div class="stat-sub" id="d-30-sub">—</div></div>
+    </div>
+    <div class="grid-60" style="margin-bottom:1rem">
+      <div class="card"><div class="card-hdr"><div><div class="card-title">Pipeline par vendeur</div><div class="card-sub">Valeur soumissions actives</div></div></div><canvas id="chart-v" height="180"></canvas></div>
+      <div class="card"><div class="card-hdr"><div><div class="card-title">Répartition par type</div></div></div><canvas id="chart-t" height="180"></canvas></div>
+    </div>
+    <div class="grid-60">
+      <div class="card"><div class="card-hdr"><div class="card-title">🔥 Top soumissions actives</div><button class="btn sm" onclick="showPanel('pipeline')">Voir tout →</button></div><div id="dash-top"></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title">⚡ Rappels urgents</div><button class="btn sm" onclick="showPanel('rappels')">Voir tout →</button></div><div id="dash-urg"></div></div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="panel" id="panel-pipeline">
+    <div class="ph-row">
+      <div><div class="page-title">Pipeline de ventes</div><div class="page-sub" id="pipe-sub">—</div></div>
+      <div class="page-actions"><button class="btn sm" onclick="loadData()">↻</button><button class="btn primary sm" onclick="showPanel('ajouter')">＋ Ajouter</button></div>
+    </div>
+    <div class="filter-bar">
+      <select id="fp-s" onchange="renderPipeline()"><option value="">Tous statuts</option><option>Soumis</option><option>Suivi en cours</option><option>Gagné</option><option>Perdu</option></select>
+      <select id="fp-v" onchange="renderPipeline()"><option value="">Tous vendeurs</option><option>Amélie</option><option>Pierre Boulanger</option><option>José</option><option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option></select>
+      <select id="fp-t" onchange="renderPipeline()"><option value="">Tous types</option></select>
+      <select id="fp-p" onchange="renderPipeline()"><option value="">Toutes priorités</option><option value="haute">🔴 Haute</option><option value="normale">Normale</option></select>
+      <input id="fp-q" placeholder="🔍 Rechercher..." oninput="renderPipeline()" style="min-width:180px"/>
+    </div>
+    <div id="pipeline-list"></div>
+  </div>
+
+  <!-- RAPPELS -->
+  <div class="panel" id="panel-rappels">
+    <div class="ph-row">
+      <div><div class="page-title">Rappels de suivi</div><div class="page-sub">Soumissions nécessitant une action</div></div>
+      <div class="page-actions"><select id="fr-v" style="font-size:12px;padding:6px 10px" onchange="renderRappels()"><option value="">Tous vendeurs</option><option>Amélie</option><option>Pierre Boulanger</option><option>José</option><option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option></select></div>
+    </div>
+    <div id="rappels-list"></div>
+  </div>
+
+  <!-- VENDEURS -->
+  <div class="panel" id="panel-vendeurs">
+    <div class="ph-row"><div><div class="page-title">🏆 Classement vendeurs</div><div class="page-sub">Performance de l'équipe Cyrell AMP</div></div></div>
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card"><div class="card-hdr"><div class="card-title">Par valeur pipeline actif</div></div><div id="lb-val"></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title">Par nombre de soumissions</div></div><div id="lb-count"></div></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem"><div class="card-hdr"><div class="card-title">Tableau comparatif</div></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>Vendeur</th><th>Total</th><th>Pipeline actif</th><th>Gagnés</th><th>Valeur gagnée</th><th>Retards</th><th>Taux succès</th></tr></thead><tbody id="vend-tbody"></tbody></table></div></div>
+    <div class="grid-2">
+      <div class="card"><div class="card-hdr"><div class="card-title">Soumissions par vendeur</div></div><canvas id="chart-v2" height="200"></canvas></div>
+      <div class="card"><div class="card-hdr"><div class="card-title">Valeur pipeline</div></div><canvas id="chart-v3" height="200"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CLIENTS -->
+  <div class="panel" id="panel-clients">
+    <div class="ph-row"><div><div class="page-title">🏢 Grading clients</div><div class="page-sub">Concentrez vos efforts sur les grades A et B</div></div></div>
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:1rem">
+      <div class="stat-card"><div class="stat-label">Grade A</div><div class="stat-value" id="gc-a" style="color:var(--gold)">—</div><div class="stat-sub">+500k$ ou 3+ projets</div></div>
+      <div class="stat-card"><div class="stat-label">Grade B</div><div class="stat-value" id="gc-b" style="color:var(--text2)">—</div><div class="stat-sub">100k$–500k$</div></div>
+      <div class="stat-card"><div class="stat-label">Grade C</div><div class="stat-value" id="gc-c" style="color:var(--orange)">—</div><div class="stat-sub">20k$–100k$</div></div>
+      <div class="stat-card"><div class="stat-label">Grade D</div><div class="stat-value" id="gc-d" style="color:var(--text3)">—</div><div class="stat-sub">moins de 20k$</div></div>
+    </div>
+    <div id="clients-list"></div>
+  </div>
+
+  <!-- ANALYSES -->
+  <div class="panel" id="panel-analyses">
+    <div class="ph-row"><div><div class="page-title">📈 Analyses & Prix</div></div></div>
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-label">Prix moy. CYR-400 (pi²)</div><div class="stat-value" id="a-400" style="color:var(--accent)">—</div></div>
+      <div class="stat-card"><div class="stat-label">Prix moy. CYR-300 (pi²)</div><div class="stat-value" id="a-300" style="color:var(--purple)">—</div></div>
+      <div class="stat-card"><div class="stat-label">Valeur moy. soumission</div><div class="stat-value" id="a-avg" style="color:var(--green)">—</div></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div class="card"><div class="card-hdr"><div class="card-title">Pipeline par type de produit</div></div><div id="prix-type"></div></div>
+      <div class="card"><div class="card-hdr"><div class="card-title">Répartition par statut</div></div><canvas id="chart-stat" height="200"></canvas></div>
+    </div>
+    <div class="card"><div class="card-hdr"><div class="card-title">Top 10 clients</div></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Client</th><th>Soumissions</th><th>Valeur totale</th><th>Statut dominant</th><th>Vendeur</th><th>Grade</th></tr></thead><tbody id="cl-tbody"></tbody></table></div></div>
+  </div>
+
+  <!-- AJOUTER -->
+  <div class="panel" id="panel-ajouter">
+    <div class="ph-row"><div><div class="page-title">Nouvelle soumission</div><div class="page-sub">Téléversez un PDF — extraction automatique par IA (tous formats Cyrell reconnus)</div></div></div>
+    <div class="grid-60">
+      <div>
+        <div class="form-section">
+          <div class="form-title">📄 Téléverser un PDF de soumission Cyrell</div>
+          <div class="drop-zone" id="dz" onclick="document.getElementById('pdf-in').click()" ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+            <span class="drop-icon">📄</span>
+            <div class="drop-title">Glisser-déposer votre PDF ici</div>
+            <div class="drop-sub">Formats reconnus : CYR-400, CYR-300, CYR-500/600, pannes d'acier, cassettes, bacs, pliages</div>
+            <input type="file" id="pdf-in" accept=".pdf" style="display:none" onchange="handlePDF(this.files[0])"/>
+          </div>
+          <div id="pdf-status"></div>
+          <div id="pdf-prev" style="display:none" class="pdf-preview"></div>
+        </div>
+        <div class="form-section" id="form-ext" style="display:none">
+          <div class="form-title">✅ Données extraites — vérifiez avant d'enregistrer</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Vendeur *</label>
+              <select id="e-vend"><option value="">Sélectionner...</option><option>Amélie</option><option>Pierre Boulanger</option><option>José</option><option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option></select>
+            </div>
+            <div class="form-group"><label>Client *</label><input id="e-client"/></div>
+            <div class="form-group"><label>Contact</label><input id="e-contact"/></div>
+            <div class="form-group"><label>No. soumission</label><input id="e-num"/></div>
+            <div class="form-group full"><label>Projet</label><input id="e-proj"/></div>
+            <div class="form-group"><label>Valeur avant taxes ($)</label><input type="number" id="e-val" min="0"/></div>
+            <div class="form-group"><label>Type de produit *</label>
+              <select id="e-type"><option value="">Sélectionner...</option>
+                <option>Panneaux CYR-400 rectangulaires</option><option>Panneaux CYR-400 formes irrégulières</option>
+                <option>Panneaux CYR-400 mixte</option><option>Panneaux CYR-300</option>
+                <option>Panneaux CYR-500/600</option><option>Panneaux anodisés</option>
+                <option>Pliages aluminium</option><option>Bacs de plantation</option>
+                <option>Pare-soleil</option><option>Plaques aluminium</option>
+                <option>Pannes d'acier</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Date *</label><input type="date" id="e-date"/></div>
+            <div class="form-group"><label>Priorité</label>
+              <select id="e-prio"><option value="normale">Normale</option><option value="haute">🔴 Haute (+200k$)</option><option value="basse">Basse</option></select>
+            </div>
+            <div class="form-group full"><label>Notes (produit, specs, contexte)</label><textarea id="e-notes" style="min-height:80px"></textarea></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn primary" id="btn-enreg" onclick="enregistrer()">✓ Enregistrer dans le pipeline</button>
+            <button class="btn" onclick="resetForm()">Annuler</button>
+          </div>
+          <div id="enreg-status"></div>
+        </div>
+      </div>
+      <div>
+        <div class="form-section">
+          <div class="form-title">✏️ Ajouter manuellement</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Vendeur *</label>
+              <select id="m-vend"><option value="">Sélectionner...</option><option>Amélie</option><option>Pierre Boulanger</option><option>José</option><option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option></select>
+            </div>
+            <div class="form-group"><label>Client *</label><input id="m-client"/></div>
+            <div class="form-group"><label>Contact</label><input id="m-contact"/></div>
+            <div class="form-group"><label>No. soumission</label><input id="m-num"/></div>
+            <div class="form-group full"><label>Projet</label><input id="m-proj"/></div>
+            <div class="form-group"><label>Valeur ($)</label><input type="number" id="m-val" min="0"/></div>
+            <div class="form-group"><label>Type *</label>
+              <select id="m-type"><option value="">Sélectionner...</option>
+                <option>Panneaux CYR-400 rectangulaires</option><option>Panneaux CYR-400 mixte</option>
+                <option>Panneaux CYR-300</option><option>Panneaux CYR-500/600</option>
+                <option>Panneaux anodisés</option><option>Pliages aluminium</option>
+                <option>Bacs de plantation</option><option>Pare-soleil</option>
+                <option>Plaques aluminium</option><option>Pannes d'acier</option><option>Autre</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Date *</label><input type="date" id="m-date"/></div>
+            <div class="form-group"><label>Priorité</label><select id="m-prio"><option value="normale">Normale</option><option value="haute">🔴 Haute</option><option value="basse">Basse</option></select></div>
+            <div class="form-group full"><label>Notes</label><textarea id="m-notes" style="min-height:80px"></textarea></div>
+          </div>
+          <button class="btn primary" onclick="enrManuel()">✓ Enregistrer</button>
+          <div id="manuel-status"></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:.75rem">📋 Formats PDF reconnus</div>
+          <div style="font-size:12px;color:var(--text2);line-height:2">
+            ✅ Panneaux CYR-400/300/500/600<br>✅ Pannes d'acier G90<br>
+            ✅ Pliages aluminium (brise-soleil, etc.)<br>✅ Bacs de plantation<br>
+            ✅ Panneaux anodisés<br>✅ Plaques aluminium<br>
+            ✅ Panneaux cassette (ancien format)<br>✅ Pare-soleil
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IA -->
+  <div class="panel" id="panel-ia">
+    <div class="ph-row"><div><div class="page-title">🤖 Assistant IA Pipeline</div><div class="page-sub">Posez n'importe quelle question sur vos ventes, clients et prix</div></div></div>
+    <div class="chat-outer">
+      <div class="chat-hdr">
+        <div class="chat-ai-av">🤖</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--text)">Assistant Cyrell AMP</div><div class="chat-ai-status">En ligne — accès temps réel au pipeline</div></div>
+        <button class="btn sm" style="margin-left:auto" onclick="clearChat()">Effacer</button>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg msg-ai">Bonjour! Je suis votre assistant pipeline Cyrell AMP. Je connais tous vos clients, soumissions, prix et vendeurs en temps réel. Posez-moi n'importe quelle question!</div>
+      </div>
+      <div class="chat-chips">
+        <button class="chip" onclick="askChip(this)">Prix moyen CYR-400 au pi²</button>
+        <button class="chip" onclick="askChip(this)">Meilleur vendeur ce mois</button>
+        <button class="chip" onclick="askChip(this)">Clients prioritaires à relancer</button>
+        <button class="chip" onclick="askChip(this)">Soumissions à risque</button>
+        <button class="chip" onclick="askChip(this)">Quoi faire cette semaine?</button>
+        <button class="chip" onclick="askChip(this)">Taux de conversion par vendeur</button>
+      </div>
+      <div class="chat-input-row">
+        <input id="chat-in" placeholder="Ex: Quels clients dois-je relancer en priorité?" onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="btn primary" onclick="sendChat()">Envoyer →</button>
+      </div>
+    </div>
+  </div>
+
+</div></div>
+
+<script>
+// Auto-detect API base URL
+const API = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+
+let data = [];
+let notes = {};
+let charts = {};
+
+const VC = {'Amélie':'#2c5f8a','Pierre Boulanger':'#2d7a4f','José':'#b8860b','Gabriel':'#6b4fbb','David Théroux':'#c0392b','J-F Urbain':'#d4691e'};
+function vColor(v){return VC[v]||'#888';}
+function initials(n){if(!n)return'?';const p=n.trim().split(' ');return(p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
+function today(){return new Date().toISOString().split('T')[0];}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x.toISOString().split('T')[0];}
+function daysUntil(d){if(!d)return 999;const n=new Date();n.setHours(0,0,0,0);return Math.round((new Date(d+'T00:00:00')-n)/86400000);}
+function fmtDate(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('fr-CA',{year:'numeric',month:'short',day:'numeric'});}
+function fmtM(v,c=false){
+  if(!v&&v!==0)return'—';const n=Number(v);if(isNaN(n)||n===0)return'—';
+  if(c){if(n>=1000000)return(n/1000000).toFixed(1)+'M$';if(n>=1000)return Math.round(n/1000)+'k$';}
+  if(n>=1000000)return(n/1000000).toFixed(2).replace(/\.?0+$/,'')+' M$';
+  return Math.round(n).toLocaleString('fr-CA')+' $';
+}
+function sc(s){return{Soumis:'b-soumis','Suivi en cours':'b-suivi','Gagné':'b-gagne','Perdu':'b-perdu'}[s]||'b-soumis';}
+function grade(v,n){if(v>=500000||n>=3)return'A';if(v>=100000||n>=2)return'B';if(v>=20000)return'C';return'D';}
+
+document.getElementById('m-date').value=today();
+document.getElementById('dash-date').textContent='Mise à jour : '+new Date().toLocaleDateString('fr-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+async function api(path,opts={}){
+  const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+
+async function loadData(){
+  try{
+    data=await api('/api/soumissions')||[];
+    try{const n=localStorage.getItem('cyrell_notes');if(n)notes=JSON.parse(n);}catch(e){}
+    updateFilters();renderAll();
+  }catch(e){console.error('Load error:',e);}
+}
+
+async function saveEntry(e){
+  const row={vendeur:e.vendeur,client:e.client,contact:e.contact||null,numero:e.numero||null,projet:e.projet||null,valeur:e.valeur||null,type:e.type,date:e.date,priorite:e.priorite||'normale',statut:'Soumis',date_suivi:addDays(e.date,14),notes:e.notes||null};
+  await api('/api/soumissions',{method:'POST',body:JSON.stringify(row)});
+  await loadData();
+}
+
+async function updateStatut(id,statut){
+  if(!statut)return;
+  await api('/api/soumissions/'+id,{method:'PATCH',body:JSON.stringify({statut})});
+  await loadData();
+}
+
+function saveNote(id,auteur,type,texte){
+  if(!notes[id])notes[id]=[];
+  notes[id].unshift({auteur,type,texte,date:new Date().toISOString()});
+  localStorage.setItem('cyrell_notes',JSON.stringify(notes));
+  renderPipeline();renderRappels();
+}
+
+function updateFilters(){
+  const types=[...new Set(data.map(d=>d.type).filter(Boolean))].sort();
+  const ft=document.getElementById('fp-t');
+  if(ft){while(ft.options.length>1)ft.remove(1);types.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;ft.appendChild(o);});}
+}
+
+function onVendeurChange(){
+  const v=document.getElementById('g-vendeur').value;
+  const av=document.getElementById('user-av');
+  av.textContent=v?initials(v):'Tous';
+  av.style.background=v?vColor(v):'var(--accent)';
+  renderAll();
+}
+
+function showPanel(n){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  document.querySelector('[data-panel="'+n+'"]')?.classList.add('active');
+  renderAll();
+}
+
+function makeChart(id,type,labels,datasets,opts={}){
+  if(charts[id])charts[id].destroy();
+  const ctx=document.getElementById(id);if(!ctx)return;
+  charts[id]=new Chart(ctx,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b6760',font:{size:11},boxWidth:14}}},...opts}});
+}
+
+function renderAll(){renderDashboard();renderPipeline();renderRappels();renderVendeurs();renderClients();renderAnalyses();updateSidebar();}
+
+function updateSidebar(){
+  const gv=document.getElementById('g-vendeur').value;
+  const actifs=data.filter(d=>['Soumis','Suivi en cours'].includes(d.statut)&&(!gv||d.vendeur===gv));
+  const val=actifs.reduce((a,s)=>a+(s.valeur||0),0);
+  const urg=actifs.filter(d=>daysUntil(d.date_suivi)<=0).length;
+  const gag=data.filter(d=>d.statut==='Gagné'&&(!gv||d.vendeur===gv)).length;
+  document.getElementById('sb-val').textContent=fmtM(val,true)||'—';
+  document.getElementById('sb-count').textContent=actifs.length;
+  document.getElementById('sb-urg').textContent=urg||'0';
+  document.getElementById('sb-gag').textContent=gag||'0';
+  const nr=document.getElementById('nb-rapp'),nd=document.getElementById('notif-dot');
+  if(urg>0){nr.style.display='inline';nr.textContent=urg;nd.style.display='block';}else{nr.style.display='none';nd.style.display='none';}
+  const np=document.getElementById('nb-pipe');
+  np.style.display=actifs.length>0?'inline':'none';np.textContent=actifs.length;
+}
+
+function renderDashboard(){
+  const gv=document.getElementById('g-vendeur').value;
+  const actifs=data.filter(d=>['Soumis','Suivi en cours'].includes(d.statut)&&(!gv||d.vendeur===gv));
+  const val=actifs.reduce((a,s)=>a+(s.valeur||0),0);
+  const gag=data.filter(d=>d.statut==='Gagné'&&(!gv||d.vendeur===gv));
+  const urg=actifs.filter(d=>daysUntil(d.date_suivi)<=0).length;
+  const d30=new Date();d30.setDate(d30.getDate()-30);
+  const recent=data.filter(d=>new Date(d.created_at||d.date+'T00:00:00')>=d30&&(!gv||d.vendeur===gv));
+  document.getElementById('d-val').textContent=fmtM(val);
+  document.getElementById('d-val-sub').textContent=actifs.length+' soumissions actives';
+  document.getElementById('d-gag').textContent=fmtM(gag.reduce((a,s)=>a+(s.valeur||0),0),true)||gag.length;
+  document.getElementById('d-gag-sub').textContent=gag.length+' contrats confirmés';
+  document.getElementById('d-urg').textContent=urg||'0';
+  document.getElementById('d-30').textContent=recent.length;
+  document.getElementById('d-30-sub').textContent='valeur: '+fmtM(recent.reduce((a,s)=>a+(s.valeur||0),0),true);
+  const vs=Object.keys(VC).filter(v=>data.some(d=>d.vendeur===v));
+  const vVals=vs.map(v=>actifs.filter(d=>d.vendeur===v).reduce((a,s)=>a+(s.valeur||0),0));
+  makeChart('chart-v','bar',vs,[{data:vVals,backgroundColor:vs.map(v=>vColor(v)),borderRadius:5,borderSkipped:false}],{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#888',font:{size:11},callback:v=>fmtM(v,true)},grid:{color:'#f0ede8'}}}});
+  const types=[...new Set(data.map(d=>d.type).filter(Boolean))].slice(0,7);
+  const tC=types.map(t=>data.filter(d=>d.type===t).length);
+  const colors=['#2c5f8a','#2d7a4f','#b8860b','#6b4fbb','#c0392b','#d4691e','#888'];
+  makeChart('chart-t','doughnut',types,[{data:tC,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}],{plugins:{legend:{position:'right',labels:{color:'#6b6760',font:{size:10},boxWidth:12}}}});
+  const top5=actifs.sort((a,b)=>(b.valeur||0)-(a.valeur||0)).slice(0,5);
+  document.getElementById('dash-top').innerHTML=top5.length?top5.map((s,i)=>{
+    const j=daysUntil(s.date_suivi);
+    const rc=j<=0?'b-urgent':j<=7?'b-warn':'b-ok';
+    const rl=j<0?Math.abs(j)+'j retard':j===0?'Auj.':j+'j';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)${i===top5.length-1?';border-bottom:none':''}">
+      <span style="font-size:13px;font-weight:700;color:var(--text3);width:16px;text-align:center">${i+1}</span>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.client}</div><div style="font-size:10px;color:var(--text3)">${s.type}</div></div>
+      <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:var(--accent)">${fmtM(s.valeur)}</div><span class="badge ${rc}">${rl}</span></div>
+    </div>`;
+  }).join(''):'<div class="empty" style="padding:1rem">Aucune soumission active</div>';
+  const urgTop=actifs.filter(d=>daysUntil(d.date_suivi)<=3).sort((a,b)=>daysUntil(a.date_suivi)-daysUntil(b.date_suivi)).slice(0,5);
+  document.getElementById('dash-urg').innerHTML=urgTop.length?urgTop.map(s=>{
+    const j=daysUntil(s.date_suivi);
+    const rl=j<0?Math.abs(j)+'j retard':j===0?"Aujourd'hui":j+'j';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${j<=0?'var(--red)':'var(--orange)'}"></div>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">${s.client}</div><div style="font-size:10px;color:var(--text3)">${s.vendeur||'—'}</div></div>
+      <div style="text-align:right"><div style="font-size:11px;font-weight:600;color:${j<=0?'var(--red)':'var(--orange)'}">${rl}</div><div style="font-size:10px;color:var(--text3)">${fmtM(s.valeur)}</div></div>
+    </div>`;
+  }).join(''):'<div style="padding:1rem;text-align:center;color:var(--text3);font-size:12px">✅ Aucun rappel urgent</div>';
+}
+
+function renderPipeline(){
+  const gv=document.getElementById('g-vendeur').value;
+  const fs=document.getElementById('fp-s')?.value||'';
+  const fv=document.getElementById('fp-v')?.value||'';
+  const ft=document.getElementById('fp-t')?.value||'';
+  const fp=document.getElementById('fp-p')?.value||'';
+  const q=(document.getElementById('fp-q')?.value||'').toLowerCase();
+  const liste=data.filter(d=>(!gv||d.vendeur===gv)&&(!fs||d.statut===fs)&&(!fv||d.vendeur===fv)&&(!ft||d.type===ft)&&(!fp||d.priorite===fp)&&(!q||[d.client,d.vendeur,d.notes,d.projet,d.numero].some(x=>(x||'').toLowerCase().includes(q)))).sort((a,b)=>(b.valeur||0)-(a.valeur||0));
+  const actifVal=liste.filter(d=>['Soumis','Suivi en cours'].includes(d.statut)).reduce((a,s)=>a+(s.valeur||0),0);
+  document.getElementById('pipe-sub').textContent=liste.length+' soumission(s) — valeur active: '+fmtM(actifVal);
+  const el=document.getElementById('pipeline-list');
+  if(!liste.length){el.innerHTML='<div class="empty">Aucune soumission ne correspond aux filtres</div>';return;}
+  el.innerHTML=liste.map(s=>{
+    const j=daysUntil(s.date_suivi);
+    const isActif=['Soumis','Suivi en cours'].includes(s.statut);
+    const cls=isActif&&j<=0?'urgent':isActif&&j<=7?'warn-c':s.priorite==='haute'?'high-c':'';
+    const rc=j<=0?'b-urgent':j<=7?'b-warn':'b-ok';
+    const rl=j<0?'Retard '+Math.abs(j)+'j':j===0?'Auj.':j+'j';
+    const sN=notes[s.id]||[];
+    const sNHTML=sN.map(n=>`<div class="crm-note"><div class="crm-note-hdr"><span class="crm-note-author">${n.auteur}</span><span class="nt-${n.type}">${{appel:'📞 Appel',email:'📧 Email',reunion:'🤝 Réunion',note:'📝 Note'}[n.type]}</span><span class="crm-note-date">${fmtDate(n.date.split('T')[0])}</span></div><div class="crm-note-text">${n.texte}</div></div>`).join('');
+    return`<div class="pipe-card ${cls}">
+      <div class="pipe-top">
+        <div style="min-width:0;flex:1">
+          <div class="pipe-name">${s.client}${s.projet&&s.projet!==s.client?` <span style="color:var(--text3);font-weight:400">— ${s.projet}</span>`:''}</div>
+          <div class="pipe-proj">${s.type}${s.numero?' · No. '+s.numero:''}</div>
+        </div>
+        <div class="pipe-right">
+          ${s.valeur?`<div class="pipe-val">${fmtM(s.valeur)}</div>`:''}
+          <span class="badge ${sc(s.statut)}">${s.statut}</span>
+          ${isActif?`<span class="badge ${rc}">${rl}</span>`:''}
+        </div>
+      </div>
+      <div class="pipe-meta">
+        <div style="width:22px;height:22px;border-radius:50%;background:${vColor(s.vendeur)};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">${initials(s.vendeur)}</div>
+        <span>${s.vendeur||'—'}</span>
+        ${s.contact?`<span>· ${s.contact}</span>`:''}
+        <span>· ${fmtDate(s.date)}</span>
+        ${s.priorite==='haute'?`<span style="color:var(--red);font-weight:600">· 🔴 Haute priorité</span>`:''}
+        ${sN.length>0?`<span style="color:var(--accent)">· ${sN.length} note(s) CRM</span>`:''}
+      </div>
+      ${s.notes?`<div class="pipe-notes">${s.notes.substring(0,200)}${s.notes.length>200?'...':''}</div>`:''}
+      <div class="pipe-actions">
+        <select onchange="updateStatut(${s.id},this.value)" style="font-size:11px;padding:4px 9px;max-width:190px">
+          <option value="">Changer le statut...</option>
+          <option value="Soumis">Soumis</option>
+          <option value="Suivi en cours">Suivi en cours ✓</option>
+          <option value="Gagné">Gagné 🎉</option>
+          <option value="Perdu">Perdu ✗</option>
+        </select>
+        <button class="btn sm" onclick="toggleCRM(${s.id})">📝 Notes CRM${sN.length?' ('+sN.length+')':''}</button>
+      </div>
+      <div class="crm-expand" id="crm-${s.id}">
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+          ${sNHTML}
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);padding:10px;margin-top:8px">
+            <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+              <select id="nt-${s.id}" style="font-size:11px;padding:5px 8px;max-width:160px">
+                <option value="note">📝 Note interne</option>
+                <option value="appel">📞 Appel téléphonique</option>
+                <option value="email">📧 Courriel</option>
+                <option value="reunion">🤝 Réunion</option>
+              </select>
+              <select id="naut-${s.id}" style="font-size:11px;padding:5px 8px;max-width:160px">
+                <option>Amélie</option><option>Pierre Boulanger</option><option>José</option>
+                <option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option>
+              </select>
+            </div>
+            <textarea id="ntxt-${s.id}" placeholder="Décrivez le suivi, la conversation, les prochaines étapes..." style="font-size:12px;min-height:60px;width:100%;margin-bottom:6px"></textarea>
+            <button class="btn primary sm" onclick="addNote(${s.id})">Enregistrer la note</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCRM(id){document.getElementById('crm-'+id).classList.toggle('open');}
+function addNote(id){
+  const type=document.getElementById('nt-'+id).value;
+  const texte=document.getElementById('ntxt-'+id).value.trim();
+  const auteur=document.getElementById('naut-'+id).value;
+  if(!texte)return;
+  saveNote(id,auteur,type,texte);
+  document.getElementById('ntxt-'+id).value='';
+}
+
+function renderRappels(){
+  const gv=document.getElementById('g-vendeur').value;
+  const fv=document.getElementById('fr-v')?.value||'';
+  const actifs=data.filter(d=>['Soumis','Suivi en cours'].includes(d.statut)&&(!gv||d.vendeur===gv)&&(!fv||d.vendeur===fv)).sort((a,b)=>daysUntil(a.date_suivi)-daysUntil(b.date_suivi));
+  const el=document.getElementById('rappels-list');
+  if(!actifs.length){el.innerHTML='<div class="empty">✅ Aucun rappel actif — tout est à jour!</div>';return;}
+  const retard=actifs.filter(d=>daysUntil(d.date_suivi)<=0);
+  const soon=actifs.filter(d=>daysUntil(d.date_suivi)>0&&daysUntil(d.date_suivi)<=7);
+  const ok=actifs.filter(d=>daysUntil(d.date_suivi)>7);
+  const cR=s=>{
+    const j=daysUntil(s.date_suivi);const u=j<=0;
+    const rl=j<0?`En retard de ${Math.abs(j)} jour(s)`:j===0?"Aujourd'hui":`Dans ${j} jour(s)`;
+    return`<div class="pipe-card ${u?'urgent':j<=3?'warn-c':''}">
+      <div class="pipe-top">
+        <div style="min-width:0;flex:1"><div class="pipe-name">${s.client}</div><div class="pipe-proj">${s.type}${s.numero?' · '+s.numero:''}</div></div>
+        <span class="badge ${u?'b-urgent':'b-warn'}" style="flex-shrink:0">${rl}</span>
+      </div>
+      <div class="pipe-meta">
+        <div style="width:20px;height:20px;border-radius:50%;background:${vColor(s.vendeur)};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff">${initials(s.vendeur)}</div>
+        <span>${s.vendeur||'—'}</span>
+        ${s.contact?`<span>· ${s.contact}</span>`:''}
+        <span style="color:var(--accent);font-weight:600">· ${fmtM(s.valeur)}</span>
+        <span>· Suivi: ${fmtDate(s.date_suivi)}</span>
+      </div>
+      <div class="pipe-actions">
+        <button class="btn sm" onclick="updateStatut(${s.id},'Suivi en cours')">✓ Suivi fait</button>
+        <button class="btn success sm" onclick="updateStatut(${s.id},'Gagné')">🎉 Gagné</button>
+        <button class="btn danger sm" onclick="updateStatut(${s.id},'Perdu')">✗ Perdu</button>
+        <button class="btn sm" onclick="toggleCRM(${s.id})">📝 Note</button>
+      </div>
+      <div class="crm-expand" id="crm-${s.id}">
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;background:var(--bg3);border-radius:var(--rsm);padding:10px">
+          <select id="nt-${s.id}" style="font-size:11px;padding:5px 8px;margin-bottom:6px;max-width:160px">
+            <option value="appel">📞 Appel</option><option value="email">📧 Email</option>
+            <option value="reunion">🤝 Réunion</option><option value="note">📝 Note</option>
+          </select>
+          <select id="naut-${s.id}" style="font-size:11px;padding:5px 8px;margin-bottom:6px;max-width:160px">
+            <option>Amélie</option><option>Pierre Boulanger</option><option>José</option>
+            <option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option>
+          </select>
+          <textarea id="ntxt-${s.id}" placeholder="Décrivez le suivi..." style="font-size:12px;min-height:55px;width:100%;margin-bottom:6px"></textarea>
+          <button class="btn primary sm" onclick="addNote(${s.id})">Enregistrer</button>
+        </div>
+      </div>
+    </div>`;
+  };
+  let html='';
+  if(retard.length)html+=`<div class="sep" style="color:var(--red)">🔴 En retard <span class="sep-n">${retard.length}</span></div>${retard.map(cR).join('')}`;
+  if(soon.length)html+=`<div class="sep" style="color:var(--orange)">🟡 Cette semaine <span class="sep-n">${soon.length}</span></div>${soon.map(cR).join('')}`;
+  if(ok.length)html+=`<div class="sep">🟢 À venir <span class="sep-n">${ok.length}</span></div>${ok.map(cR).join('')}`;
+  el.innerHTML=html;
+}
+
+function renderVendeurs(){
+  const vs=Object.keys(VC).filter(v=>data.some(d=>d.vendeur===v));
+  if(!vs.length)return;
+  const stats=vs.map(v=>{
+    const all=data.filter(d=>d.vendeur===v);
+    const actifs=all.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
+    const gag=all.filter(d=>d.statut==='Gagné');
+    const ret=actifs.filter(d=>daysUntil(d.date_suivi)<=0);
+    const fer=all.filter(d=>['Gagné','Perdu'].includes(d.statut));
+    return{v,total:all.length,actifs:actifs.length,valActif:actifs.reduce((a,s)=>a+(s.valeur||0),0),gag:gag.length,valGag:gag.reduce((a,s)=>a+(s.valeur||0),0),ret:ret.length,taux:fer.length?Math.round(gag.length/fer.length*100):null};
+  });
+  const byVal=[...stats].sort((a,b)=>b.valActif-a.valActif);
+  const byC=[...stats].sort((a,b)=>b.total-a.total);
+  const maxV=byVal[0]?.valActif||1;
+  const ranks=['🥇','🥈','🥉'];
+  const rC=['rank-1','rank-2','rank-3'];
+  const lbCard=(s,i,vf,sf)=>`<div class="vendor-card">
+    <div class="rank-num ${rC[i]||''}">${i<3?ranks[i]:i+1}</div>
+    <div class="vendor-av" style="background:${vColor(s.v)}">${initials(s.v)}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${s.v}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:1px">${sf(s)}</div>
+      <div style="background:var(--bg3);border-radius:4px;height:4px;overflow:hidden;margin-top:5px"><div style="width:${Math.round(s.valActif/maxV*100)}%;height:100%;border-radius:4px;background:${vColor(s.v)}"></div></div>
+    </div>
+    <div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:700;color:var(--text)">${vf(s)}</div><div style="font-size:11px;color:var(--text3)">${s.actifs} actives</div></div>
+  </div>`;
+  document.getElementById('lb-val').innerHTML=byVal.map((s,i)=>lbCard(s,i,s=>fmtM(s.valActif),s=>`${s.total} soumissions · ${s.ret>0?'<span style="color:var(--red)">'+s.ret+' retard</span>':'à jour'}`)).join('');
+  document.getElementById('lb-count').innerHTML=byC.map((s,i)=>lbCard(s,i,s=>s.total+' soum.',s=>`${s.gag} gagnées · ${s.taux!==null?s.taux+'%':'—'}`)).join('');
+  document.getElementById('vend-tbody').innerHTML=byVal.map((s,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;border-radius:50%;background:${vColor(s.v)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${initials(s.v)}</div><span style="font-weight:500">${s.v}</span></div></td>
+    <td class="val">${s.total}</td><td class="val" style="color:var(--accent)">${fmtM(s.valActif)}</td>
+    <td class="val" style="color:var(--green)">${s.gag}</td><td class="val">${fmtM(s.valGag)}</td>
+    <td class="val" style="color:${s.ret>0?'var(--red)':'var(--green)'}">${s.ret||'—'}</td>
+    <td class="val">${s.taux!==null?s.taux+'%':'—'}</td>
+  </tr>`).join('');
+  makeChart('chart-v2','pie',byC.map(s=>s.v),[{data:byC.map(s=>s.total),backgroundColor:byC.map(s=>vColor(s.v)),borderWidth:2,borderColor:'#fff'}],{plugins:{legend:{position:'bottom',labels:{color:'#6b6760',font:{size:10},boxWidth:12}}}});
+  makeChart('chart-v3','bar',byVal.map(s=>s.v),[{label:'Pipeline actif',data:byVal.map(s=>s.valActif),backgroundColor:byVal.map(s=>vColor(s.v)+'cc'),borderRadius:5,borderSkipped:false},{label:'Gagné',data:byVal.map(s=>s.valGag),backgroundColor:byVal.map(s=>vColor(s.v)+'44'),borderRadius:5,borderSkipped:false}],{plugins:{legend:{labels:{color:'#6b6760',font:{size:11}}}},scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#888',font:{size:11},callback:v=>fmtM(v,true)},grid:{color:'#f0ede8'}}}});
+}
+
+function renderClients(){
+  const clients=[...new Set(data.map(d=>d.client).filter(Boolean))];
+  const cStats=clients.map(c=>{
+    const cd=data.filter(d=>d.client===c);
+    const actifs=cd.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
+    const gag=cd.filter(d=>d.statut==='Gagné');
+    const tv=cd.reduce((a,s)=>a+(s.valeur||0),0);
+    const g=grade(tv,cd.length);
+    return{c,count:cd.length,actifs:actifs.length,valActif:actifs.reduce((a,s)=>a+(s.valeur||0),0),gag:gag.length,valGag:gag.reduce((a,s)=>a+(s.valeur||0),0),tv,g,vend:[...new Set(cd.map(d=>d.vendeur).filter(Boolean))][0]||'—',lastDate:cd.map(d=>d.date).sort().reverse()[0],contacts:[...new Set(cd.map(d=>d.contact).filter(Boolean))]};
+  }).sort((a,b)=>b.tv-a.tv);
+  const gc={A:0,B:0,C:0,D:0};cStats.forEach(s=>gc[s.g]++);
+  ['a','b','c','d'].forEach(g=>document.getElementById('gc-'+g).textContent=gc[g.toUpperCase()]||'0');
+  const maxV=cStats[0]?.tv||1;
+  document.getElementById('clients-list').innerHTML=cStats.map(s=>`
+    <div class="client-card">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="grade-badge grade-${s.g}">${s.g}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="font-size:14px;font-weight:600;color:var(--text)">${s.c}</div>
+            ${s.contacts.length?`<span class="badge b-gray">${s.contacts[0]}</span>`:''}
+            <span class="badge b-vendeur">${s.vend}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">Dernière soumission: ${fmtDate(s.lastDate)}</div>
+          <div style="background:var(--bg3);border-radius:4px;height:4px;overflow:hidden;margin-top:8px"><div style="width:${Math.round(s.tv/maxV*100)}%;height:100%;border-radius:4px;background:${s.g==='A'?'var(--gold)':s.g==='B'?'var(--text3)':s.g==='C'?'var(--orange)':'var(--border2)'}"></div></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;min-width:130px">
+          <div style="font-size:16px;font-weight:700;color:var(--text)">${fmtM(s.tv)}</div>
+          <div style="font-size:11px;color:var(--text3)">${s.count} soumission(s)</div>
+          <div style="display:flex;gap:6px;margin-top:6px;justify-content:flex-end;flex-wrap:wrap">
+            ${s.actifs>0?`<span class="badge b-soumis">${s.actifs} actives</span>`:''}
+            ${s.gag>0?`<span class="badge b-gagne">${s.gag} gagnées</span>`:''}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;font-size:11px;color:var(--text3);flex-wrap:wrap">
+        <span>Pipeline actif: <strong style="color:var(--accent)">${fmtM(s.valActif)||'—'}</strong></span>
+        <span>Gagné: <strong style="color:var(--green)">${fmtM(s.valGag)||'—'}</strong></span>
+        <span>Taux succès: <strong>${s.count>0?Math.round(s.gag/s.count*100)+'%':'—'}</strong></span>
+      </div>
+    </div>`).join('');
+}
+
+function renderAnalyses(){
+  const actifs=data.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
+  const getPrix=arr=>{const p=arr.map(d=>{const m=(d.notes||'').match(/(\d+[.,]\d+)\s*\$\/pi/);return m?parseFloat(m[1].replace(',','.')):null;}).filter(Boolean);return p.length?(p.reduce((a,b)=>a+b,0)/p.length).toFixed(2)+' $/pi²':'—';};
+  document.getElementById('a-400').textContent=getPrix(actifs.filter(d=>d.type?.includes('CYR-400')));
+  document.getElementById('a-300').textContent=getPrix(actifs.filter(d=>d.type?.includes('CYR-300')));
+  document.getElementById('a-avg').textContent=actifs.length?fmtM(actifs.reduce((a,s)=>a+(s.valeur||0),0)/actifs.length):'—';
+  const types=[...new Set(data.map(d=>d.type).filter(Boolean))];
+  const colors=['#2c5f8a','#2d7a4f','#b8860b','#6b4fbb','#c0392b','#d4691e','#888','#4a9eca'];
+  const maxT=Math.max(...types.map(t=>data.filter(d=>d.type===t).reduce((a,s)=>a+(s.valeur||0),0)),1);
+  document.getElementById('prix-type').innerHTML=types.map((t,i)=>{
+    const td=data.filter(d=>d.type===t);const tv=td.reduce((a,s)=>a+(s.valeur||0),0);
+    return`<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text2);margin-bottom:4px;display:flex;justify-content:space-between"><strong style="color:var(--text)">${t}</strong><span>${td.length} · ${fmtM(tv,true)}</span></div><div style="background:var(--bg3);border-radius:4px;height:6px;overflow:hidden"><div style="width:${Math.round(tv/maxT*100)}%;height:100%;border-radius:4px;background:${colors[i%colors.length]}"></div></div></div>`;
+  }).join('');
+  makeChart('chart-stat','doughnut',['Soumis','Suivi en cours','Gagné','Perdu'],[{data:['Soumis','Suivi en cours','Gagné','Perdu'].map(s=>data.filter(d=>d.statut===s).length),backgroundColor:['#b8860b','#6b4fbb','#2d7a4f','#c0392b'],borderWidth:2,borderColor:'#fff'}],{plugins:{legend:{position:'bottom',labels:{color:'#6b6760',font:{size:11},boxWidth:12}}}});
+  const clients=[...new Set(data.map(d=>d.client).filter(Boolean))];
+  document.getElementById('cl-tbody').innerHTML=clients.map(c=>{
+    const cd=data.filter(d=>d.client===c);
+    const tv=cd.reduce((a,s)=>a+(s.valeur||0),0);
+    const sts=cd.map(d=>d.statut);
+    const dom=sts.sort((a,b)=>sts.filter(v=>v===b).length-sts.filter(v=>v===a).length)[0];
+    return{c,count:cd.length,tv,dom,vend:[...new Set(cd.map(d=>d.vendeur).filter(Boolean))][0]||'—',g:grade(tv,cd.length)};
+  }).sort((a,b)=>b.tv-a.tv).slice(0,10).map(s=>`<tr>
+    <td style="font-weight:600;color:var(--text)">${s.c}</td>
+    <td class="val">${s.count}</td><td class="val" style="color:var(--accent)">${fmtM(s.tv)}</td>
+    <td><span class="badge ${sc(s.dom)}">${s.dom}</span></td>
+    <td>${s.vend}</td>
+    <td><span style="font-weight:700;color:${s.g==='A'?'var(--gold)':s.g==='B'?'var(--text2)':s.g==='C'?'var(--orange)':'var(--text3)'}">${s.g}</span></td>
+  </tr>`).join('');
+}
+
+function dzOver(e){e.preventDefault();document.getElementById('dz').classList.add('over');}
+function dzLeave(){document.getElementById('dz').classList.remove('over');}
+function dzDrop(e){e.preventDefault();dzLeave();const f=e.dataTransfer.files[0];if(f?.type==='application/pdf')handlePDF(f);}
+
+async function handlePDF(file){
+  showMsg('<span class="spinner"></span> Lecture du PDF en cours...','s-info','pdf-status');
+  try{
+    const fd=new FormData();fd.append('pdf',file);
+    const r=await fetch(API+'/api/extract-pdf',{method:'POST',body:fd});
+    const result=await r.json();
+    if(!r.ok)throw new Error(result.error||'Erreur serveur');
+    const p=result.data;
+    document.getElementById('pdf-prev').style.display='block';
+    document.getElementById('pdf-prev').innerHTML=`<div style="font-weight:600;color:var(--text);margin-bottom:6px">📄 ${file.name}</div><div style="font-family:monospace;font-size:10px;color:var(--text3);max-height:80px;overflow:auto">${result.rawText}</div>`;
+    const vSel=document.getElementById('e-vend');
+    let found=false;
+    for(const o of vSel.options)if(o.value===p.vendeur){vSel.value=p.vendeur;found=true;break;}
+    if(!found&&p.vendeur){const o=document.createElement('option');o.value=p.vendeur;o.textContent=p.vendeur;vSel.appendChild(o);vSel.value=p.vendeur;}
+    document.getElementById('e-client').value=p.client||'';
+    document.getElementById('e-contact').value=p.contact||'';
+    document.getElementById('e-num').value=p.numero||'';
+    document.getElementById('e-proj').value=p.projet||'';
+    document.getElementById('e-val').value=p.valeur||'';
+    document.getElementById('e-date').value=p.date||today();
+    document.getElementById('e-notes').value=p.notes||'';
+    document.getElementById('e-prio').value=p.priorite||'normale';
+    const tSel=document.getElementById('e-type');
+    for(const o of tSel.options)if(o.value===p.type){tSel.value=p.type;break;}
+    document.getElementById('form-ext').style.display='block';
+    showMsg('✅ Données extraites automatiquement! Vérifiez et enregistrez.','s-success','pdf-status');
+  }catch(e){
+    document.getElementById('form-ext').style.display='block';
+    showMsg('⚠️ Extraction partielle — complétez les champs manquants. ('+e.message+')','s-warn','pdf-status');
+  }
+}
+
+async function enregistrer(){
+  const v=document.getElementById('e-vend').value;
+  const c=document.getElementById('e-client').value.trim();
+  const t=document.getElementById('e-type').value;
+  const dt=document.getElementById('e-date').value;
+  if(!v||!c||!t||!dt){showMsg('Vendeur, client, type et date requis.','s-error','enreg-status');return;}
+  const btn=document.getElementById('btn-enreg');btn.disabled=true;btn.textContent='Enregistrement...';
+  try{
+    await saveEntry({vendeur:v,client:c,contact:document.getElementById('e-contact').value.trim(),numero:document.getElementById('e-num').value.trim(),projet:document.getElementById('e-proj').value.trim(),valeur:Number(document.getElementById('e-val').value)||null,type:t,date:dt,priorite:document.getElementById('e-prio').value,notes:document.getElementById('e-notes').value.trim()});
+    showMsg('✅ Enregistré dans le pipeline!','s-success','enreg-status');
+    btn.disabled=false;btn.textContent='✓ Enregistrer dans le pipeline';
+    setTimeout(()=>{showPanel('pipeline');resetForm();},1500);
+  }catch(e){showMsg('Erreur: '+e.message,'s-error','enreg-status');btn.disabled=false;btn.textContent='✓ Enregistrer dans le pipeline';}
+}
+
+async function enrManuel(){
+  const v=document.getElementById('m-vend').value;
+  const c=document.getElementById('m-client').value.trim();
+  const t=document.getElementById('m-type').value;
+  const dt=document.getElementById('m-date').value;
+  if(!v||!c||!t||!dt){showMsg('Vendeur, client, type et date requis.','s-error','manuel-status');return;}
+  try{
+    await saveEntry({vendeur:v,client:c,contact:document.getElementById('m-contact').value.trim(),numero:document.getElementById('m-num').value.trim(),projet:document.getElementById('m-proj').value.trim(),valeur:Number(document.getElementById('m-val').value)||null,type:t,date:dt,priorite:document.getElementById('m-prio').value,notes:document.getElementById('m-notes').value.trim()});
+    showMsg('✅ Soumission ajoutée!','s-success','manuel-status');
+    ['m-client','m-contact','m-num','m-proj','m-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('m-val').value='';document.getElementById('m-vend').value='';document.getElementById('m-type').value='';document.getElementById('m-prio').value='normale';document.getElementById('m-date').value=today();
+  }catch(e){showMsg('Erreur: '+e.message,'s-error','manuel-status');}
+}
+
+function resetForm(){
+  document.getElementById('pdf-prev').style.display='none';
+  document.getElementById('form-ext').style.display='none';
+  document.getElementById('pdf-status').innerHTML='';
+  document.getElementById('pdf-in').value='';
+  document.getElementById('enreg-status').innerHTML='';
+}
+
+function showMsg(msg,cls,target){const el=document.getElementById(target);if(el)el.innerHTML=`<div class="status-msg ${cls}">${msg}</div>`;}
+function doSearch(q){if(!q)return;document.getElementById('fp-q').value=q;showPanel('pipeline');}
+
+function buildCtx(){
+  const actifs=data.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
+  return`Pipeline Cyrell AMP — ${data.length} soumissions, ${actifs.length} actives, valeur: ${fmtM(actifs.reduce((a,s)=>a+(s.valeur||0),0))}. Données: ${JSON.stringify(data.map(d=>({id:d.id,client:d.client,vendeur:d.vendeur,valeur:d.valeur,type:d.type,statut:d.statut,date:d.date,date_suivi:d.date_suivi,notes:(d.notes||'').substring(0,100),projet:d.projet})))}`;
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chat-in');
+  const q=inp.value.trim();if(!q)return;
+  inp.value='';addMsg(q,'user');
+  const typing=addTyping();
+  try{
+    const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,context:buildCtx()})});
+    const d=await r.json();
+    typing.remove();
+    addMsg(d.reply||'Erreur de réponse.','ai');
+  }catch(e){typing.remove();addMsg('Erreur de connexion au serveur.','ai');}
+}
+
+function addMsg(txt,role){
+  const el=document.getElementById('chat-msgs');
+  const div=document.createElement('div');div.className='msg msg-'+role;div.textContent=txt;
+  el.appendChild(div);el.scrollTop=el.scrollHeight;return div;
+}
+function addTyping(){
+  const el=document.getElementById('chat-msgs');
+  const div=document.createElement('div');div.className='typing';
+  div.innerHTML='<div class="dots"><span></span><span></span><span></span></div>';
+  el.appendChild(div);el.scrollTop=el.scrollHeight;return div;
+}
+function clearChat(){document.getElementById('chat-msgs').innerHTML='<div class="msg msg-ai">Bonjour! Comment puis-je vous aider?</div>';}
+function askChip(btn){document.getElementById('chat-in').value=btn.textContent;sendChat();}
+
+loadData();
+setInterval(loadData,60000);
+</script>
+</body>
+</html>

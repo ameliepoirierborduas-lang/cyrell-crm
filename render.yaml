@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: cyrell-crm
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ANTHROPIC_KEY
+        sync: false
+      - key: SUPABASE_URL
+        value: https://uatnxooedixhzpvuduii.supabase.co
+      - key: SUPABASE_KEY
+        sync: false
