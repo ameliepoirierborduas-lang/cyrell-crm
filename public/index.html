@@ -746,6 +746,41 @@ function mkChart(id,type,labels,datasets,opts){
   }});
 }
 
+
+// ── FUZZY SEARCH ──────────────────────────────────────────────────────────────
+function fuzzyMatch(query, fields){
+  if(!query) return true;
+  const q = query.toLowerCase().trim();
+  const words = q.split(/\s+/).filter(Boolean);
+  const haystack = fields.map(f=>(f||'').toLowerCase()).join(' ');
+
+  // 1. Exact match
+  if(haystack.includes(q)) return true;
+
+  // 2. All words present (any order)
+  if(words.length > 1 && words.every(w => haystack.includes(w))) return true;
+
+  // 3. Each word matches start of any word in haystack
+  const haystackWords = haystack.split(/[\s\-\.\,\/]+/).filter(Boolean);
+  if(words.every(qw => haystackWords.some(hw => hw.startsWith(qw) || qw.startsWith(hw.substring(0, Math.max(3, hw.length-1)))))) return true;
+
+  // 4. Fuzzy: remove accents and try again
+  const normalize = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ');
+  const nq = normalize(q);
+  const nh = normalize(haystack);
+  if(nh.includes(nq)) return true;
+  const nwords = nq.split(/\s+/).filter(Boolean);
+  if(nwords.length > 1 && nwords.every(w => nh.includes(w))) return true;
+
+  // 5. Abbreviation match (ex: "QGP" matches "Quartier Général Police")
+  if(q.length >= 2 && q === q.toUpperCase()){
+    const initials = haystackWords.map(w=>w[0]).join('').toUpperCase();
+    if(initials.includes(q)) return true;
+  }
+
+  return false;
+}
+
 // ── RENDER ALL ────────────────────────────────────────────────────────────────
 function renderAll(){
   updateSidebar();
@@ -905,7 +940,7 @@ function renderPipeline(){
   const q=(document.getElementById('fp-q')?.value||'').toLowerCase();
   const liste=DATA.filter(d=>
     (!v||d.vendeur===v)&&(!fs||d.statut===fs)&&(!fv||d.vendeur===fv)&&
-    (!ft||d.type===ft)&&(!q||[d.client,d.vendeur,d.notes,d.projet,d.numero].some(x=>(x||'').toLowerCase().includes(q)))
+    (!ft||d.type===ft)&&(!q||fuzzyMatch(q,[d.client,d.vendeur,d.notes,d.projet,d.numero,d.contact]))
   ).sort((a,b)=>(b.valeur||0)-(a.valeur||0));
   const av=liste.filter(d=>['Soumis','Suivi en cours'].includes(d.statut)).reduce((a,s)=>a+(s.valeur||0),0);
   document.getElementById('pipe-sub').textContent=liste.length+' soumission(s) — valeur active: '+fm(av);
@@ -960,6 +995,7 @@ function pipeCard(s){
       </select>
       <button class="btn sm" onclick="toggleCRM(${s.id})">📝 Notes${sN.length?' ('+sN.length+')':''}</button>
       <button class="btn sm" onclick="openClient('${esc(s.client)}')">🏢 Fiche</button>
+      <button class="btn danger sm" onclick="deleteSoumission(${s.id},'${esc(s.client)}')">🗑</button>
     </div>
     <div class="crm-panel" id="crm-${s.id}">
       ${nHTML}
@@ -985,6 +1021,14 @@ function addNote(id){
   NOTES[id].unshift({auteur,type,texte,date:new Date().toISOString()});
   localStorage.setItem('c_notes',JSON.stringify(NOTES));
   renderPipeline();renderRappels();
+}
+
+async function deleteSoumission(id, client){
+  if(!confirm(`Supprimer la soumission de "${client}"? Cette action est irréversible.`)) return;
+  try{
+    await apiFetch('/api/soumissions/'+id, {method:'DELETE'});
+    await loadAll();
+  }catch(e){console.error(e);}
 }
 
 async function changeStatut(id,statut){
