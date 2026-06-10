@@ -69,6 +69,11 @@ app.post('/api/soumissions', async (req, res) => {
   catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
+app.delete('/api/soumissions/:id', async (req, res) => {
+  try { await sbDelete('soumissions', req.params.id); res.json({ success: true }); }
+  catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
 app.patch('/api/soumissions/:id', async (req, res) => {
   try { await sbPatch('soumissions', req.params.id, req.body); res.json({ success: true }); }
   catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
@@ -104,18 +109,23 @@ app.post('/api/extract-pdf', upload.single('pdf'), async (req, res) => {
     const pdfData = await pdfParse(req.file.buffer);
     const text = pdfData.text.substring(0, 3000);
 
-    const prompt = `Tu analyses un PDF de soumission Cyrell AMP (fabricant panneaux aluminium architectural, Beloeil QC).
-
-Formats: PAR: ou BY: = vendeur, "Votre prix" ou "Your Price" ou "Price" = valeur avant taxes, "in USD" = devise USD sinon CAD.
-
-Retourne UNIQUEMENT ce JSON sans markdown:
+    const prompt = `Tu analyses un PDF de soumission Cyrell AMP (fabricant panneaux aluminium, Beloeil QC). Retourne UNIQUEMENT ce JSON sans markdown ni texte avant/apres:
 {"vendeur":"","client":"","contact":"","numero":"","projet":"","valeur":0,"type":"","date":"YYYY-MM-DD","notes":"","priorite":"normale","devise":"CAD"}
 
-Types: Panneaux CYR-400 rectangulaires, Panneaux CYR-400 mixte, Panneaux CYR-300, Panneaux CYR-500/600, Panneaux anodisés, Pliages aluminium, Bacs de plantation, Pare-soleil, Plaques aluminium, Pannes d'acier, Autre
-priorite: "haute" si valeur > 200000
-date: YYYY-MM-DD
+REGLES:
+vendeur: nom apres "PAR:" ou "BY:" — seulement le nom Cyrell (Amelie, Pierre Boulanger, Jose, Gabriel, David Theroux, J-F Urbain). Si "PAR: Amelie / Jean Tremblay", prendre "Amelie" seulement. NE JAMAIS mettre le contact client dans vendeur.
+contact: personne chez le CLIENT. Chercher "A l'attention de", "Attn:", nom sous la compagnie cliente.
+client: nom de la compagnie cliente.
+numero: numero de soumission ex "2026-15".
+projet: nom du projet de construction ex "Ecole Sainte-Marie". JAMAIS une superficie (pi2, m2) ni un chiffre. Si "3 049,00 pi2" ou "B2026" => laisser vide "".
+valeur: montant de "Votre prix" ou "Your Price" avant taxes, chiffre seul.
+devise: "USD" si mentionne, sinon "CAD".
+type: trouver le modele CYR dans le texte (CYR-100 a CYR-900 ou pannes, bacs, etc). Traitement: "peint" si AAMA/RAL/couleur/peinture mentionne, "anodise" si anodise mentionne. Exemples: "CYR-300 peint", "CYR-400 anodise", "Pannes d'acier", "Bacs de plantation".
+date: date soumission YYYY-MM-DD.
+priorite: "haute" si valeur > 200000.
+notes: specs importantes (dimensions, epaisseur, couleur, AAMA, superficie).
 
-Texte: ${text}`;
+Texte: \${text}\`;
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
