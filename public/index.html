@@ -995,6 +995,7 @@ function pipeCard(s){
       </select>
       <button class="btn sm" onclick="toggleCRM(${s.id})">📝 Notes${sN.length?' ('+sN.length+')':''}</button>
       <button class="btn sm" onclick="openClient('${esc(s.client)}')">🏢 Fiche</button>
+      <button class="btn sm" onclick="openEdit(${s.id})">✏️ Modifier</button>
       <button class="btn danger sm" onclick="deleteSoumission(${s.id},'${esc(s.client)}')">🗑</button>
     </div>
     <div class="crm-panel" id="crm-${s.id}">
@@ -1024,11 +1025,12 @@ function addNote(id){
 }
 
 async function deleteSoumission(id, client){
-  if(!confirm(`Supprimer la soumission de "${client}"? Cette action est irréversible.`)) return;
+  if(!confirm('Supprimer la soumission de "'+client+'"?')) return;
   try{
-    await apiFetch('/api/soumissions/'+id, {method:'DELETE'});
+    const r=await fetch(API+'/api/soumissions/'+id,{method:'DELETE'});
+    if(!r.ok)throw new Error(await r.text());
     await loadAll();
-  }catch(e){console.error(e);}
+  }catch(e){alert('Erreur: '+e.message);}
 }
 
 async function changeStatut(id,statut){
@@ -1072,10 +1074,12 @@ function renderRappels(){
         <button class="btn sm" onclick="changeStatut(${s.id},'Suivi en cours')">✓ Suivi fait</button>
         <button class="btn success sm" onclick="changeStatut(${s.id},'Gagné')">🎉 Gagné</button>
         <button class="btn danger sm" onclick="changeStatut(${s.id},'Perdu')">✗ Perdu</button>
-        <button class="btn sm" onclick="toggleCRM(${s.id})">📝 Note</button>
+        <button class="btn sm" onclick="toggleCRM(${s.id})">📝 Notes${(NOTES[s.id]||[]).length?" ("+(NOTES[s.id]||[]).length+")":""}</button>
+        <button class="btn sm" onclick="openEdit(${s.id})">✏️ Modifier</button>
         <button class="btn sm" onclick="openClient('${esc(s.client)}')">🏢 Fiche</button>
       </div>
       <div class="crm-panel" id="crm-${s.id}">
+        ${(NOTES[s.id]||[]).map(n=>"<div class=\"crm-note\"><div class=\"crm-note-hdr\"><span class=\"crm-note-author\">"+n.auteur+"</span><span class=\"nt nt-"+n.type+"\">"+({appel:"📞 Appel",email:"📧 Email",reunion:"🤝 Réunion",note:"📝 Note"}[n.type]||n.type)+"</span><span class=\"crm-note-date\">"+fd(n.date.split("T")[0])+"</span></div><div class=\"crm-note-text\">"+n.texte+"</div></div>").join("")}
         <div style="background:var(--bg3);border-radius:var(--rs);padding:10px;margin-top:8px">
           <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
             <select id="nt-${s.id}" style="font-size:11px;padding:4px 8px;max-width:150px"><option value="appel">📞 Appel</option><option value="email">📧 Email</option><option value="reunion">🤝 Réunion</option><option value="note">📝 Note</option></select>
@@ -1817,6 +1821,55 @@ function renderScoreboard(){
     </div>
   </div>`;
 }
+
+function openEdit(id){
+  const s=DATA.find(d=>d.id===id);if(!s)return;
+  document.getElementById('edit-id').value=s.id;
+  document.getElementById('edit-client').value=s.client||'';
+  document.getElementById('edit-contact').value=s.contact||'';
+  document.getElementById('edit-num').value=s.numero||'';
+  document.getElementById('edit-proj').value=s.projet||'';
+  document.getElementById('edit-val').value=s.valeur||'';
+  document.getElementById('edit-date').value=s.date||'';
+  document.getElementById('edit-notes').value=s.notes||'';
+  document.getElementById('edit-prio').value=s.priorite||'normale';
+  document.getElementById('edit-statut').value=s.statut||'Soumis';
+  document.getElementById('edit-devise').value=s.devise||'CAD';
+  const vs=document.getElementById('edit-vend');
+  for(const o of vs.options)if(o.value===s.vendeur){vs.value=s.vendeur;break;}
+  const ts=document.getElementById('edit-type');
+  for(const o of ts.options)if(o.value===s.type){ts.value=s.type;break;}
+  document.getElementById('edit-status').innerHTML='';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');}
+
+async function saveEdit(){
+  const id=document.getElementById('edit-id').value;
+  const v=document.getElementById('edit-vend').value;
+  const c=document.getElementById('edit-client').value.trim();
+  const t=document.getElementById('edit-type').value;
+  const dt=document.getElementById('edit-date').value;
+  if(!v||!c||!t||!dt){showMsg('edit-status','Vendeur, client, type et date requis.','s-err');return;}
+  try{
+    await apiFetch('/api/soumissions/'+id,{method:'PATCH',body:JSON.stringify({
+      vendeur:v,client:c,
+      contact:document.getElementById('edit-contact').value.trim()||null,
+      numero:document.getElementById('edit-num').value.trim()||null,
+      projet:document.getElementById('edit-proj').value.trim()||null,
+      valeur:Number(document.getElementById('edit-val').value)||null,
+      type:t,date:dt,
+      priorite:document.getElementById('edit-prio').value,
+      statut:document.getElementById('edit-statut').value,
+      notes:document.getElementById('edit-notes').value.trim()||null,
+      devise:document.getElementById('edit-devise').value
+    })});
+    showMsg('edit-status','Modifié!','s-ok');
+    await loadAll();
+    setTimeout(closeEditModal,800);
+  }catch(e){showMsg('edit-status','Erreur: '+e.message,'s-err');}
+}
 // ── INIT ──────────────────────────────────────────────────────────────────────
 document.getElementById('m-date').value=today();
 if(checkAuth()){
@@ -1836,6 +1889,49 @@ if(checkAuth()){
     </div>
     <button class="btn primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Se connecter →</button>
     <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div class="modal" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal-inner" style="max-width:680px">
+    <div class="modal-hdr">
+      <div style="font-size:16px;font-weight:700">Modifier la soumission</div>
+      <button class="modal-close" onclick="closeEditModal()">x</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id"/>
+      <div class="fgrid">
+        <div class="fg"><label>Vendeur *</label>
+          <select id="edit-vend"><option value="">Sélectionner</option><option>Amélie</option><option>Pierre Boulanger</option><option>José</option><option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option></select>
+        </div>
+        <div class="fg"><label>Client *</label><input id="edit-client"/></div>
+        <div class="fg"><label>Contact</label><input id="edit-contact"/></div>
+        <div class="fg"><label>No. soumission</label><input id="edit-num"/></div>
+        <div class="fg full"><label>Projet</label><input id="edit-proj"/></div>
+        <div class="fg"><label>Valeur ($)</label><input type="number" id="edit-val" min="0"/></div>
+        <div class="fg"><label>Devise</label><select id="edit-devise"><option value="CAD">CAD</option><option value="USD">USD</option></select></div>
+        <div class="fg"><label>Type *</label>
+          <select id="edit-type"><option value="">Sélectionner</option>
+            <optgroup label="Peints"><option>CYR-100 peint</option><option>CYR-300 peint</option><option>CYR-400 peint</option><option>CYR-500 peint</option><option>CYR-600 peint</option><option>CYR-800 peint</option><option>CYR-900 peint</option></optgroup>
+            <optgroup label="Anodisés"><option>CYR-100 anodisé</option><option>CYR-300 anodisé</option><option>CYR-400 anodisé</option><option>CYR-500 anodisé</option><option>CYR-600 anodisé</option><option>CYR-800 anodisé</option><option>CYR-900 anodisé</option></optgroup>
+            <optgroup label="Autres"><option>Bacs de plantation</option><option>Jardinières</option><option>Pare-soleil</option><option>Shadowbox</option><option>Pliages aluminium</option><option>Plaques aluminium</option><option>Pannes d\'acier</option><option>Autre</option></optgroup>
+          </select>
+        </div>
+        <div class="fg"><label>Date *</label><input type="date" id="edit-date"/></div>
+        <div class="fg"><label>Statut</label>
+          <select id="edit-statut"><option value="Soumis">Soumis</option><option value="Suivi en cours">Suivi en cours</option><option value="Gagné">Gagné</option><option value="Perdu">Perdu</option></select>
+        </div>
+        <div class="fg"><label>Priorité</label>
+          <select id="edit-prio"><option value="normale">Normale</option><option value="haute">Haute</option><option value="basse">Basse</option></select>
+        </div>
+        <div class="fg full"><label>Notes</label><textarea id="edit-notes" style="min-height:80px"></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:.5rem">
+        <button class="btn primary" onclick="saveEdit()">Enregistrer</button>
+        <button class="btn" onclick="closeEditModal()">Annuler</button>
+      </div>
+      <div id="edit-status"></div>
+    </div>
   </div>
 </div>
 </body>
