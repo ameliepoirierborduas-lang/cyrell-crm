@@ -284,6 +284,21 @@ canvas{max-height:200px}
 </style>
 </head>
 <body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">C</div>
+    <div class="login-title">Cyrell AMP</div>
+    <div class="login-sub">CRM — Accès réservé à l'équipe</div>
+    <div class="fg" style="text-align:left;margin-bottom:1rem">
+      <label>Mot de passe</label>
+      <input type="password" id="login-pw" placeholder="Entrez le mot de passe" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Se connecter →</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
 <div class="app">
 
 <!-- TOPBAR -->
@@ -1890,20 +1905,6 @@ if(checkAuth()){
   setInterval(loadAll,60000);
 }
 </script>
-
-<div class="login-screen" id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">C</div>
-    <div class="login-title">Cyrell AMP</div>
-    <div class="login-sub">CRM — Accès réservé à l'équipe</div>
-    <div class="fg" style="text-align:left;margin-bottom:1rem">
-      <label>Mot de passe</label>
-      <input type="password" id="login-pw" placeholder="Entrez le mot de passe" onkeydown="if(event.key==='Enter')doLogin()"/>
-    </div>
-    <button class="btn primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">Se connecter →</button>
-    <div class="login-err" id="login-err"></div>
-  </div>
-</div>
 
 <div class="modal" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
   <div class="modal-inner" style="max-width:680px">
