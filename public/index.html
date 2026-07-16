@@ -1005,6 +1005,10 @@ function pipeCard(s){
           <select id="nt-${s.id}" style="font-size:11px;padding:4px 8px;max-width:155px"><option value="note">📝 Note</option><option value="appel">📞 Appel</option><option value="email">📧 Email</option><option value="reunion">🤝 Réunion</option></select>
           <select id="naut-${s.id}" style="font-size:11px;padding:4px 8px;max-width:155px"><option>Amélie</option><option>Pierre Boulanger</option><option>José</option><option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option></select>
         </div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+          <label style="font-size:11px;color:var(--text2);flex-shrink:0">Date :</label>
+          <input type="date" id="ndat-${s.id}" value="${today()}" style="font-size:11px;padding:4px 8px;max-width:155px"/>
+        </div>
         <textarea id="ntxt-${s.id}" placeholder="Décrivez le suivi..." style="font-size:12px;min-height:55px;width:100%;margin-bottom:6px"></textarea>
         <button class="btn primary sm" onclick="addNote(${s.id})">Enregistrer</button>
       </div>
@@ -1017,10 +1021,15 @@ function addNote(id){
   const type=document.getElementById('nt-'+id)?.value;
   const texte=document.getElementById('ntxt-'+id)?.value.trim();
   const auteur=document.getElementById('naut-'+id)?.value;
+  const dateEl=document.getElementById('ndat-'+id);
+  const dateVal=dateEl?.value||today();
+  // Build ISO date from selected date (noon local time to avoid timezone issues)
+  const noteDate=dateVal+'T12:00:00.000Z';
   if(!texte)return;
   if(!NOTES[id])NOTES[id]=[];
-  NOTES[id].unshift({auteur,type,texte,date:new Date().toISOString()});
+  NOTES[id].unshift({auteur,type,texte,date:noteDate});
   localStorage.setItem('c_notes',JSON.stringify(NOTES));
+  if(dateEl)dateEl.value=today();
   renderPipeline();renderRappels();
 }
 
@@ -1084,6 +1093,10 @@ function renderRappels(){
           <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
             <select id="nt-${s.id}" style="font-size:11px;padding:4px 8px;max-width:150px"><option value="appel">📞 Appel</option><option value="email">📧 Email</option><option value="reunion">🤝 Réunion</option><option value="note">📝 Note</option></select>
             <select id="naut-${s.id}" style="font-size:11px;padding:4px 8px;max-width:150px"><option>Amélie</option><option>Pierre Boulanger</option><option>José</option><option>Gabriel</option><option>David Théroux</option><option>J-F Urbain</option></select>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+            <label style="font-size:11px;color:var(--text2);flex-shrink:0">Date :</label>
+            <input type="date" id="ndat-${s.id}" value="${today()}" style="font-size:11px;padding:4px 8px;max-width:155px"/>
           </div>
           <textarea id="ntxt-${s.id}" placeholder="Décrivez le suivi..." style="font-size:12px;min-height:52px;width:100%;margin-bottom:6px"></textarea>
           <button class="btn primary sm" onclick="addNote(${s.id})">Enregistrer</button>
