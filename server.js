@@ -135,7 +135,8 @@ Texte: \${text}\`;
     const d = await resp.json();
     if (d.error) throw new Error(d.error.message);
     const txt = (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const extracted = JSON.parse(txt.replace(/```json|```/g, '').trim());
+    const clean = txt.replace(/^```json/,'').replace(/^```/,'').replace(/```$/,'').trim();
+    const extracted = JSON.parse(clean);
     res.json({ success: true, data: extracted, rawText: text.substring(0, 400) });
   } catch (e) {
     console.error('PDF error:', e);
@@ -182,7 +183,8 @@ Retourne UNIQUEMENT ce JSON sans markdown:
     const d = await resp.json();
     if (d.error) throw new Error(d.error.message);
     const txt = (d.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const extracted = JSON.parse(txt.replace(/```json|```/g, '').trim());
+    const clean = txt.replace(/^```json/,'').replace(/^```/,'').replace(/```$/,'').trim();
+    const extracted = JSON.parse(clean);
     res.json({ success: true, data: extracted });
   } catch (e) {
     console.error('Screenshot error:', e);
