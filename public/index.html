@@ -1953,7 +1953,7 @@ function genererRapport(){
   const variation = valMoisPrev>0 ? Math.round((valSoumCeMois-valMoisPrev)/valMoisPrev*100) : null;
   const varTxt = variation!==null ? (variation>=0?`+${variation}%`:`${variation}%`) + ' vs mois précédent' : '';
 
-  const vendeurTxt = v ? v : 'l'équipe';
+  const vendeurTxt = v ? v : "l'équipe";
   const titre = `Rapport de ventes — ${moisCourant.charAt(0).toUpperCase()+moisCourant.slice(1)}`;
 
   const corps = `Bonjour,
