@@ -1906,102 +1906,118 @@ async function saveEdit(){
 function genererRapport(){
   const v = gv();
   const now = new Date();
-  const moisCourant = now.toLocaleDateString('fr-CA',{month:'long',year:'numeric'});
+  const moisNom = now.toLocaleDateString('fr-CA',{month:'long',year:'numeric'});
+  const moisTitre = moisNom.charAt(0).toUpperCase() + moisNom.slice(1);
   const debutMois = new Date(now.getFullYear(), now.getMonth(), 1);
   const debutMoisPrev = new Date(now.getFullYear(), now.getMonth()-1, 1);
   const finMoisPrev = new Date(now.getFullYear(), now.getMonth(), 0);
 
-  // Données du mois courant
-  const ceMois = DATA.filter(d=>{
-    const dd=new Date(d.date+'T00:00:00');
-    return dd>=debutMois && (!v||d.vendeur===v);
-  });
-  const moisPrev = DATA.filter(d=>{
-    const dd=new Date(d.date+'T00:00:00');
-    return dd>=debutMoisPrev && dd<=finMoisPrev && (!v||d.vendeur===v);
-  });
-
-  // Stats générales filtrées par vendeur
-  const toutesDonnees = DATA.filter(d=>!v||d.vendeur===v);
-  const actifs = toutesDonnees.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
-  const gagnésCeMois = ceMois.filter(d=>d.statut==='Gagné');
+  const ceMois = DATA.filter(d=>{ const dd=new Date(d.date+'T00:00:00'); return dd>=debutMois&&(!v||d.vendeur===v); });
+  const moisPrev = DATA.filter(d=>{ const dd=new Date(d.date+'T00:00:00'); return dd>=debutMoisPrev&&dd<=finMoisPrev&&(!v||d.vendeur===v); });
+  const tous = DATA.filter(d=>!v||d.vendeur===v);
+  const actifs = tous.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
+  const gagnes = tous.filter(d=>d.statut==='Gagné');
+  const fermes = tous.filter(d=>['Gagné','Perdu'].includes(d.statut));
+  const gagnesCeMois = ceMois.filter(d=>d.statut==='Gagné');
   const perdusCeMois = ceMois.filter(d=>d.statut==='Perdu');
-  const fermes = toutesDonnees.filter(d=>['Gagné','Perdu'].includes(d.statut));
-  const gagnes = toutesDonnees.filter(d=>d.statut==='Gagné');
   const taux = fermes.length ? Math.round(gagnes.length/fermes.length*100) : 0;
   const valPipeline = actifs.reduce((a,s)=>a+(s.valeur||0),0);
-  const valGagnésCeMois = gagnésCeMois.reduce((a,s)=>a+(s.valeur||0),0);
+  const valGagCeMois = gagnesCeMois.reduce((a,s)=>a+(s.valeur||0),0);
   const valSoumCeMois = ceMois.reduce((a,s)=>a+(s.valeur||0),0);
   const valMoisPrev = moisPrev.reduce((a,s)=>a+(s.valeur||0),0);
-
-  // Objectif annuel
+  const retards = actifs.filter(d=>du(d.date_suivi)<=0).length;
+  const chauds = actifs.filter(d=>d.priorite==='haute'||(d.valeur||0)>=100000).sort((a,b)=>(b.valeur||0)-(a.valeur||0)).slice(0,3);
   const fp = getFiscalProgress();
   const totalGagne = gagnes.reduce((a,s)=>a+(s.valeur||0),0);
   const pctObj = Math.round(totalGagne/GOAL_ANNUAL*100);
   const projAnnuelle = fp.pctTime>0 ? Math.round(totalGagne/fp.pctTime) : 0;
-
-  // Top 3 deals chauds
-  const chauds = actifs
-    .filter(d=>d.priorite==='haute'||(d.valeur||0)>=100000)
-    .sort((a,b)=>(b.valeur||0)-(a.valeur||0))
-    .slice(0,3);
-
-  // Deals en retard
-  const retards = actifs.filter(d=>du(d.date_suivi)<=0).length;
-
-  // Variation vs mois précédent
   const variation = valMoisPrev>0 ? Math.round((valSoumCeMois-valMoisPrev)/valMoisPrev*100) : null;
-  const varTxt = variation!==null ? (variation>=0?`+${variation}%`:`${variation}%`) + ' vs mois précédent' : '';
+  const varTxt = variation!==null ? (variation>=0?'+':'')+variation+'% vs mois precedent' : '';
+  const vendeurTxt = v ? v : "l'equipe";
 
-  const vendeurTxt = v ? v : "l'équipe";
-  const titre = `Rapport de ventes — ${moisCourant.charAt(0).toUpperCase()+moisCourant.slice(1)}`;
+  let dealsSection = '';
+  if(chauds.length > 0){
+    dealsSection = 'TOP DEALS A SURVEILLER :
+';
+    chauds.forEach(function(s, i){
+      const proj = s.projet && s.projet !== s.client ? ' - ' + s.projet : '';
+      const suivi = du(s.date_suivi)<=0 ? 'EN RETARD' : du(s.date_suivi)+'j';
+      dealsSection += '  '+(i+1)+'. '+s.client+proj+' - '+fm(s.valeur,false,s.devise)+' - Suivi: '+suivi+'
+';
+    });
+    dealsSection += '
+';
+  }
 
-  const corps = `Bonjour,
+  const onTrack = projAnnuelle >= GOAL_ANNUAL * 0.85;
+  const objTxt = onTrack ? "En voie d'atteindre l'objectif." : "Un effort supplementaire est requis.";
 
-Voici le rapport de ventes de ${vendeurTxt} pour ${moisCourant}.
+  const sujet = 'Rapport de ventes - ' + moisTitre;
+  const corps = 'Bonjour,
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-ACTIVITÉ DU MOIS
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+'
+    + 'Voici le rapport de ventes de '+vendeurTxt+' pour '+moisNom+'.
 
-Soumissions envoyées ce mois : ${ceMois.length}
-Valeur totale soumissionnée : ${fm(valSoumCeMois)} ${varTxt}
-Contrats gagnés ce mois : ${gagnésCeMois.length} (${fm(valGagnésCeMois)})
-Contrats perdus ce mois : ${perdusCeMois.length}
+'
+    + '========================
+'
+    + 'ACTIVITE DU MOIS
+'
+    + '========================
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-PIPELINE ACTIF
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+'
+    + 'Soumissions envoyees ce mois : '+ceMois.length+'
+'
+    + 'Valeur totale soumissionnee : '+fm(valSoumCeMois)+(varTxt?' ('+varTxt+')':'')+'
+'
+    + 'Contrats gagnes ce mois : '+gagnesCeMois.length+' ('+fm(valGagCeMois)+')
+'
+    + 'Contrats perdus ce mois : '+perdusCeMois.length+'
 
-Soumissions actives : ${actifs.length}
-Valeur pipeline actif : ${fm(valPipeline)}
-Taux de conversion (cumulatif) : ${taux}% (${gagnes.length} gagnés / ${fermes.length} fermés)
-Suivis en retard : ${retards}
+'
+    + '========================
+'
+    + 'PIPELINE ACTIF
+'
+    + '========================
 
-${chauds.length>0?`TOP DEALS À SURVEILLER :
-${chauds.map((s,i)=>`  ${i+1}. ${s.client}${s.projet&&s.projet!==s.client?' — '+s.projet:''} · ${fm(s.valeur,false,s.devise)} · Suivi: ${du(s.date_suivi)<=0?'EN RETARD':du(s.date_suivi)+'j'}`).join('
-')}
-`:''}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-OBJECTIF ANNUEL 2025-2026
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+'
+    + 'Soumissions actives : '+actifs.length+'
+'
+    + 'Valeur pipeline actif : '+fm(valPipeline)+'
+'
+    + 'Taux de conversion (cumulatif) : '+taux+'% ('+gagnes.length+' gagnes / '+fermes.length+' fermes)
+'
+    + 'Suivis en retard : '+retards+'
 
-Objectif : ${fm(GOAL_ANNUAL)}
-Réalisé (gagnés) : ${fm(totalGagne)} (${pctObj}% de l'objectif)
-Projection annuelle : ${fm(projAnnuelle)}
-Mois restants : ${fp.monthsLeft}
-${projAnnuelle>=GOAL_ANNUAL?'✅ En voie d'atteindre l'objectif annuel.':'⚠️ Un effort supplémentaire est requis pour atteindre l'objectif.'}
+'
+    + dealsSection
+    + '========================
+'
+    + 'OBJECTIF ANNUEL 2025-2026
+'
+    + '========================
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+'
+    + 'Objectif : '+fm(GOAL_ANNUAL)+'
+'
+    + 'Realise (gagnes) : '+fm(totalGagne)+' ('+pctObj+'% de l'objectif)
+'
+    + 'Projection annuelle : '+fm(projAnnuelle)+'
+'
+    + 'Mois restants : '+fp.monthsLeft+'
+'
+    + objTxt+'
 
-Rapport généré automatiquement depuis le CRM Cyrell AMP.
-${new Date().toLocaleDateString('fr-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+'
+    + '========================
 
-  // Ouvrir dans le client mail
-  const sujet = encodeURIComponent(titre);
-  const body = encodeURIComponent(corps);
-  const destinataire = ''; // laisser vide — à remplir par l'utilisateur
-  window.location.href = `mailto:${destinataire}?subject=${sujet}&body=${body}`;
+'
+    + 'Rapport genere depuis le CRM Cyrell AMP.
+'
+    + new Date().toLocaleDateString('fr-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  window.location.href = 'mailto:?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
 document.getElementById('m-date').value=today();
