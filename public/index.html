@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <title>Cyrell AMP — CRM</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -1904,120 +1907,74 @@ async function saveEdit(){
 
 // ── RAPPORT MENSUEL ───────────────────────────────────────────────────────────
 function genererRapport(){
-  const v = gv();
-  const now = new Date();
-  const moisNom = now.toLocaleDateString('fr-CA',{month:'long',year:'numeric'});
-  const moisTitre = moisNom.charAt(0).toUpperCase() + moisNom.slice(1);
-  const debutMois = new Date(now.getFullYear(), now.getMonth(), 1);
-  const debutMoisPrev = new Date(now.getFullYear(), now.getMonth()-1, 1);
-  const finMoisPrev = new Date(now.getFullYear(), now.getMonth(), 0);
-
-  const ceMois = DATA.filter(d=>{ const dd=new Date(d.date+'T00:00:00'); return dd>=debutMois&&(!v||d.vendeur===v); });
-  const moisPrev = DATA.filter(d=>{ const dd=new Date(d.date+'T00:00:00'); return dd>=debutMoisPrev&&dd<=finMoisPrev&&(!v||d.vendeur===v); });
-  const tous = DATA.filter(d=>!v||d.vendeur===v);
-  const actifs = tous.filter(d=>['Soumis','Suivi en cours'].includes(d.statut));
-  const gagnes = tous.filter(d=>d.statut==='Gagné');
-  const fermes = tous.filter(d=>['Gagné','Perdu'].includes(d.statut));
-  const gagnesCeMois = ceMois.filter(d=>d.statut==='Gagné');
-  const perdusCeMois = ceMois.filter(d=>d.statut==='Perdu');
-  const taux = fermes.length ? Math.round(gagnes.length/fermes.length*100) : 0;
-  const valPipeline = actifs.reduce((a,s)=>a+(s.valeur||0),0);
-  const valGagCeMois = gagnesCeMois.reduce((a,s)=>a+(s.valeur||0),0);
-  const valSoumCeMois = ceMois.reduce((a,s)=>a+(s.valeur||0),0);
-  const valMoisPrev = moisPrev.reduce((a,s)=>a+(s.valeur||0),0);
-  const retards = actifs.filter(d=>du(d.date_suivi)<=0).length;
-  const chauds = actifs.filter(d=>d.priorite==='haute'||(d.valeur||0)>=100000).sort((a,b)=>(b.valeur||0)-(a.valeur||0)).slice(0,3);
-  const fp = getFiscalProgress();
-  const totalGagne = gagnes.reduce((a,s)=>a+(s.valeur||0),0);
-  const pctObj = Math.round(totalGagne/GOAL_ANNUAL*100);
-  const projAnnuelle = fp.pctTime>0 ? Math.round(totalGagne/fp.pctTime) : 0;
-  const variation = valMoisPrev>0 ? Math.round((valSoumCeMois-valMoisPrev)/valMoisPrev*100) : null;
-  const varTxt = variation!==null ? (variation>=0?'+':'')+variation+'% vs mois precedent' : '';
-  const vendeurTxt = v ? v : "l'equipe";
-
-  let dealsSection = '';
-  if(chauds.length > 0){
-    dealsSection = 'TOP DEALS A SURVEILLER :
-';
-    chauds.forEach(function(s, i){
-      const proj = s.projet && s.projet !== s.client ? ' - ' + s.projet : '';
-      const suivi = du(s.date_suivi)<=0 ? 'EN RETARD' : du(s.date_suivi)+'j';
-      dealsSection += '  '+(i+1)+'. '+s.client+proj+' - '+fm(s.valeur,false,s.devise)+' - Suivi: '+suivi+'
-';
-    });
-    dealsSection += '
-';
+  var v=gv();
+  var now=new Date();
+  var moisNom=now.toLocaleDateString('fr-CA',{month:'long',year:'numeric'});
+  var moisTitre=moisNom.charAt(0).toUpperCase()+moisNom.slice(1);
+  var debutMois=new Date(now.getFullYear(),now.getMonth(),1);
+  var debutPrev=new Date(now.getFullYear(),now.getMonth()-1,1);
+  var finPrev=new Date(now.getFullYear(),now.getMonth(),0);
+  var ceMois=DATA.filter(function(d){var dd=new Date(d.date+'T00:00:00');return dd>=debutMois&&(!v||d.vendeur===v);});
+  var moisPrev=DATA.filter(function(d){var dd=new Date(d.date+'T00:00:00');return dd>=debutPrev&&dd<=finPrev&&(!v||d.vendeur===v);});
+  var tous=DATA.filter(function(d){return !v||d.vendeur===v;});
+  var actifs=tous.filter(function(d){return d.statut==='Soumis'||d.statut==='Suivi en cours';});
+  var gagnes=tous.filter(function(d){return d.statut==='Gagné';});
+  var fermes=tous.filter(function(d){return d.statut==='Gagné'||d.statut==='Perdu';});
+  var gagnesMois=ceMois.filter(function(d){return d.statut==='Gagné';});
+  var perdusMois=ceMois.filter(function(d){return d.statut==='Perdu';});
+  var taux=fermes.length?Math.round(gagnes.length/fermes.length*100):0;
+  var valPipe=actifs.reduce(function(a,s){return a+(s.valeur||0);},0);
+  var valGagMois=gagnesMois.reduce(function(a,s){return a+(s.valeur||0);},0);
+  var valSoumMois=ceMois.reduce(function(a,s){return a+(s.valeur||0);},0);
+  var valPrevMois=moisPrev.reduce(function(a,s){return a+(s.valeur||0);},0);
+  var retards=actifs.filter(function(d){return du(d.date_suivi)<=0;}).length;
+  var chauds=actifs.filter(function(d){return d.priorite==='haute'||(d.valeur||0)>=100000;}).sort(function(a,b){return (b.valeur||0)-(a.valeur||0);}).slice(0,3);
+  var fp=getFiscalProgress();
+  var totalGagne=gagnes.reduce(function(a,s){return a+(s.valeur||0);},0);
+  var pctObj=Math.round(totalGagne/GOAL_ANNUAL*100);
+  var projAn=fp.pctTime>0?Math.round(totalGagne/fp.pctTime):0;
+  var variation=valPrevMois>0?Math.round((valSoumMois-valPrevMois)/valPrevMois*100):null;
+  var varTxt=variation!==null?(variation>=0?'+':'')+variation+'% vs mois precedent':'';
+  var vendeurTxt=v?v:"l'equipe";
+  var NL="\n";
+  var SEP="========================"+NL;
+  var deals='';
+  if(chauds.length>0){
+    deals='TOP DEALS A SURVEILLER :'+NL;
+    for(var ci=0;ci<chauds.length;ci++){
+      var s=chauds[ci];
+      var proj=s.projet&&s.projet!==s.client?' - '+s.projet:'';
+      var sv=du(s.date_suivi)<=0?'EN RETARD':du(s.date_suivi)+'j';
+      deals+='  '+(ci+1)+'. '+s.client+proj+' - '+fm(s.valeur,false,s.devise)+' - Suivi: '+sv+NL;
+    }
+    deals+=NL;
   }
-
-  const onTrack = projAnnuelle >= GOAL_ANNUAL * 0.85;
-  const objTxt = onTrack ? "En voie d'atteindre l'objectif." : "Un effort supplementaire est requis.";
-
-  const sujet = 'Rapport de ventes - ' + moisTitre;
-  const corps = 'Bonjour,
-
-'
-    + 'Voici le rapport de ventes de '+vendeurTxt+' pour '+moisNom+'.
-
-'
-    + '========================
-'
-    + 'ACTIVITE DU MOIS
-'
-    + '========================
-
-'
-    + 'Soumissions envoyees ce mois : '+ceMois.length+'
-'
-    + 'Valeur totale soumissionnee : '+fm(valSoumCeMois)+(varTxt?' ('+varTxt+')':'')+'
-'
-    + 'Contrats gagnes ce mois : '+gagnesCeMois.length+' ('+fm(valGagCeMois)+')
-'
-    + 'Contrats perdus ce mois : '+perdusCeMois.length+'
-
-'
-    + '========================
-'
-    + 'PIPELINE ACTIF
-'
-    + '========================
-
-'
-    + 'Soumissions actives : '+actifs.length+'
-'
-    + 'Valeur pipeline actif : '+fm(valPipeline)+'
-'
-    + 'Taux de conversion (cumulatif) : '+taux+'% ('+gagnes.length+' gagnes / '+fermes.length+' fermes)
-'
-    + 'Suivis en retard : '+retards+'
-
-'
-    + dealsSection
-    + '========================
-'
-    + 'OBJECTIF ANNUEL 2025-2026
-'
-    + '========================
-
-'
-    + 'Objectif : '+fm(GOAL_ANNUAL)+'
-'
-    + 'Realise (gagnes) : '+fm(totalGagne)+' ('+pctObj+'% de l'objectif)
-'
-    + 'Projection annuelle : '+fm(projAnnuelle)+'
-'
-    + 'Mois restants : '+fp.monthsLeft+'
-'
-    + objTxt+'
-
-'
-    + '========================
-
-'
-    + 'Rapport genere depuis le CRM Cyrell AMP.
-'
-    + new Date().toLocaleDateString('fr-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-  window.location.href = 'mailto:?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
+  var onTrack=projAn>=GOAL_ANNUAL*0.85;
+  var objTxt=onTrack?"En voie d'atteindre l'objectif.":"Effort supplementaire requis.";
+  var sujet='Rapport de ventes - '+moisTitre;
+  var corps='Bonjour,'+NL+NL
+    +'Rapport de ventes de '+vendeurTxt+' pour '+moisNom+'.'+NL+NL
+    +SEP+'ACTIVITE DU MOIS'+NL+SEP+NL
+    +'Soumissions envoyees : '+ceMois.length+NL
+    +'Valeur soumissionnee : '+fm(valSoumMois)+(varTxt?' ('+varTxt+')':'')+NL
+    +'Contrats gagnes : '+gagnesMois.length+' ('+fm(valGagMois)+')'+NL
+    +'Contrats perdus : '+perdusMois.length+NL+NL
+    +SEP+'PIPELINE ACTIF'+NL+SEP+NL
+    +'Soumissions actives : '+actifs.length+NL
+    +'Valeur pipeline : '+fm(valPipe)+NL
+    +'Taux de conversion : '+taux+'% ('+gagnes.length+' gagnes / '+fermes.length+' fermes)'+NL
+    +'Suivis en retard : '+retards+NL+NL
+    +deals
+    +SEP+'OBJECTIF ANNUEL 2025-2026'+NL+SEP+NL
+    +'Objectif : '+fm(GOAL_ANNUAL)+NL
+    +'Realise : '+fm(totalGagne)+' ('+pctObj+'%)'+NL
+    +'Projection annuelle : '+fm(projAn)+NL
+    +'Mois restants : '+fp.monthsLeft+NL
+    +objTxt+NL+NL
+    +SEP+NL
+    +'Rapport genere depuis le CRM Cyrell AMP.'+NL
+    +new Date().toLocaleDateString('fr-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  window.location.href='mailto:?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
 }
 // ── INIT ──────────────────────────────────────────────────────────────────────
 document.getElementById('m-date').value=today();
